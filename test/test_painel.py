@@ -12,8 +12,52 @@ from pipeline import db, marts
 from test.test_marts import base
 
 
+def periodos_sinteticos():
+    linhas = []
+    for tipo, data in [("total", None), ("ano", date(2024, 1, 1))]:
+        for empresa, eventos, ia, mixed, blamed, rank, rank_ia in [
+            ("Alfa", 2, 0, 1, 1, 1, 2),
+            ("Beta", 1, 1, 0, 0, 2, 1),
+        ]:
+            linhas.append(
+                {
+                    "tipo_periodo": tipo,
+                    "inicio_periodo": data,
+                    "empresa": empresa,
+                    "eventos_corte": eventos,
+                    "ia_empregador": ia,
+                    "ia_entre_fatores": mixed,
+                    "ia_outras_fontes": blamed,
+                    "ia_nao_classificada": 0,
+                    "posicao_eventos": rank,
+                    "posicao_ia_empregador": rank_ia,
+                    "eventos_periodo": 3,
+                    "ia_empregador_periodo": 1,
+                }
+            )
+    for mes, empresa, ia in [(1, "Alfa", 0), (3, "Alfa", 0), (3, "Beta", 1)]:
+        linhas.append(
+            {
+                "tipo_periodo": "mes",
+                "inicio_periodo": date(2024, mes, 1),
+                "empresa": empresa,
+                "eventos_corte": 1,
+                "ia_empregador": ia,
+                "ia_entre_fatores": 0,
+                "ia_outras_fontes": 1 if not ia else 0,
+                "ia_nao_classificada": 0,
+                "posicao_eventos": 2 if empresa == "Beta" else 1,
+                "posicao_ia_empregador": 1 if empresa == "Beta" else 2,
+                "eventos_periodo": 1 if mes == 1 else 2,
+                "ia_empregador_periodo": 0 if mes == 1 else 1,
+            }
+        )
+    return pd.DataFrame(linhas)
+
+
 def dados_sinteticos():
     return {
+        "empresas_periodo": periodos_sinteticos(),
         "kpis": pd.DataFrame(
             [
                 {
@@ -282,3 +326,58 @@ def test_tabela_formata_top_cinco_sem_agregar_e_escapa_texto():
     assert "E0" not in html and "E1" not in html
     assert "<td>1</td><td>6</td>" in html
     pd.testing.assert_frame_equal(dados, antes)
+
+
+def test_recorte_empresas_nunca_soma_niveis_e_rejeita_mes_sem_ano():
+    dados = periodos_sinteticos()
+    assert painel.selecionar_periodo(dados)["eventos_corte"].tolist() == [2, 1]
+    assert painel.selecionar_periodo(dados, 2024)["eventos_corte"].tolist() == [2, 1]
+    assert painel.selecionar_periodo(dados, 2024, 3)["eventos_corte"].tolist() == [1, 1]
+    assert painel.selecionar_periodo(dados, 2025).empty
+    assert painel.selecionar_periodo(dados, 2024, 2).empty
+    with pytest.raises(ValueError, match="ano antes"):
+        painel.selecionar_periodo(dados, mes=3)
+
+
+def test_rankings_separam_eventos_de_citacao_ia_e_preservam_dados_nos_temas():
+    dados = painel.selecionar_periodo(periodos_sinteticos())
+    antes = dados.copy(deep=True)
+    claro = painel.figuras_empresas(dados, "Todo o registro")
+    escuro = painel.figuras_empresas(dados, "Todo o registro", tema="escuro")
+    assert list(claro[0].data[0].y) == ["Alfa", "Beta"]
+    assert list(claro[0].data[0].x) == [2, 1]
+    assert list(claro[1].data[0].y) == ["Beta"]
+    assert list(claro[1].data[0].x) == [1]
+    for a, b in zip(claro, escuro, strict=True):
+        assert list(a.data[0].x) == list(b.data[0].x)
+        assert list(a.data[0].y) == list(b.data[0].y)
+        assert "Todo o registro" in a.layout.title.text
+        assert b.layout.paper_bgcolor == painel.TEMAS["escuro"]["superficie"]
+    pd.testing.assert_frame_equal(dados, antes)
+    with pytest.raises(ValueError, match="único período"):
+        painel.figuras_empresas(periodos_sinteticos())
+
+
+def test_quadros_empresa_e_meses_preservam_contagens_e_escapam_texto():
+    dados = periodos_sinteticos()
+    resumo = painel.selecionar_periodo(dados)
+    quadro = painel.quadro_eventos(resumo)
+    assert quadro["Eventos de corte"].tolist() == [2, 1]
+    assert quadro["Empregador citou IA"].tolist() == [0, 1]
+    meses = dados.loc[dados["tipo_periodo"].eq("mes")]
+    detalhe = painel.quadro_eventos(meses, mensal=True)
+    assert detalhe["Mês do evento"].tolist() == ["jan/2024", "mar/2024", "mar/2024"]
+    resumo = resumo.copy()
+    resumo.loc[resumo["empresa"].eq("Alfa"), "empresa"] = "<script>"
+    html = painel.tabela_eventos_html(resumo)
+    assert "&lt;script&gt;" in html and "<script>" not in html
+    assert "MESES COM EVENTOS" in painel.tabela_eventos_html(meses, mensal=True)
+
+
+def test_rankings_vazios_e_sem_citacao_ia_nao_inventam_zero():
+    dados = painel.selecionar_periodo(periodos_sinteticos(), 2024, 1)
+    figuras = painel.figuras_empresas(dados, "jan/2024")
+    assert list(figuras[0].data[0].x) == [1]
+    assert not figuras[1].data
+    vazio = painel.selecionar_periodo(periodos_sinteticos(), 2024, 2)
+    assert all(not figura.data for figura in painel.figuras_empresas(vazio, "fev/2024"))

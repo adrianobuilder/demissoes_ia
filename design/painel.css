@@ -63,8 +63,29 @@
 .rodape { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-top: 1px solid var(--borda); padding-top: 12px; color: var(--secundario); font-size: 10px; line-height: 1.7; }
 .rodape strong { font-size: 9px; color: var(--texto); }
 .rodape a { color: var(--acento); text-decoration: none; }
+.reading-guide { color: var(--secundario); background: var(--acento_suave); border-left: 3px solid var(--acento); padding: 11px 14px; font-size: 12px; line-height: 1.65; }
+.reading-guide strong { color: var(--texto); }
+.reading-guide small { display: block; margin-top: 4px; font-size: 11px; }
+.period-summary { color: var(--texto); font-size: 12px; line-height: 1.7; }
+.period-summary span { display: block; color: var(--secundario); font-size: 10px; }
+.event-table { overflow: auto; max-height: 280px; }
+.event-table table { min-width: 780px; }
+.event-table th { position: sticky; top: 0; background: var(--superficie_2); z-index: 1; }
+.st-key-filtros_empresas .react-aria-ComboBox [role="group"] { background: var(--superficie); border: 1px solid var(--borda); color: var(--texto); }
+.st-key-filtros_empresas .react-aria-ComboBox input { color: var(--texto) !important; background: transparent; }
+.st-key-filtros_empresas .react-aria-ComboBox input::placeholder { color: var(--secundario); }
+.st-key-filtros_empresas .react-aria-ComboBox button { color: var(--secundario); }
+[data-testid="stSelectboxVirtualDropdown"] { background: var(--superficie); border-color: var(--borda); }
+[data-testid="stSelectboxVirtualDropdown"] [role="listbox"], [data-testid="stSelectboxVirtualDropdown"] [role="option"] { background: var(--superficie); color: var(--texto); }
+[data-testid="stSelectboxVirtualDropdown"] [data-item-hl] { color: inherit; }
+[data-testid="stSelectboxVirtualDropdown"] [role="option"][data-focused], [data-testid="stSelectboxVirtualDropdown"] [role="option"][aria-selected="true"] { background: var(--acento_suave); }
+.st-key-empresas_periodo [data-testid="stCaptionContainer"] { color: var(--secundario); opacity: 1; font-size: 11px; }
+.st-key-empresas_periodo [role="tab"] p { color: var(--secundario); font-size: 12px; }
+.st-key-empresas_periodo [role="tab"][aria-selected="true"] p { color: var(--acento); }
 @media (max-width: 1180px) { .masthead nav { display: none; } }
 @media (max-width: 950px) {
+  .st-key-rankings_empresas [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  .st-key-rankings_empresas [data-testid="stColumn"] { flex: 1 1 100% !important; min-width: 0 !important; }
   [data-testid="stMainBlockContainer"] { padding: 0 16px 22px; }
   .st-key-faixa_panorama [data-testid="stHorizontalBlock"], .st-key-faixa_distribuicao [data-testid="stHorizontalBlock"], .st-key-faixa_ocupacoes [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
   .st-key-faixa_panorama [data-testid="stColumn"], .st-key-faixa_distribuicao [data-testid="stColumn"], .st-key-faixa_ocupacoes [data-testid="stColumn"] { flex: 1 1 100% !important; min-width: 0 !important; }

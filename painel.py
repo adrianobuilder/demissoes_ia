@@ -1,16 +1,19 @@
 """Spec compartilhada do painel e do relatório.
 
-Ler somente SELECT * dos oito marts, em conexão read-only curta e sem fallback
+Ler somente SELECT * dos nove marts, em conexão read-only curta e sem fallback
 para objetos Python. Não importar Streamlit nem calcular medidas de negócio.
 Formatar números brasileiros sem locale; ausentes são '—'.
 
-Quatro faixas: sete cartões; mensal/atribuição; empresa/execução/evidência;
-família/concentração e tabela de empresas. Sete figuras reutilizadas por app.py e
-relatorio.py, nesta ordem: mensal, atribuição, empresa, execução, evidência,
-família, concentração. Barras mensais/execução, rosca de atribuição, pizza de
-evidência, barras horizontais de empresa/família e curva de concentração.
-O período padrão é o intervalo mensal completo; o filtro do app altera só a figura
-mensal. Os cartões e as outras figuras representam o snapshot inteiro.
+Cinco faixas: sete cartões; empresas por período; mensal/atribuição;
+empresa/execução/evidência; família/concentração. Nove figuras compartilhadas.
+No HTML: dois rankings; mensal, atribuição, postos por empresa, execução,
+evidência, família e concentração. Colunas mensais/execução, rosca de atribuição,
+pizza de evidência, barras horizontais e curva de concentração.
+As sete figuras de figuras() mantêm o escopo anterior: filtro só no mensal.
+figuras_empresas() recebe um único período do novo mart e retorna dois rankings
+por eventos, sem exigir postos conhecidos. Filtros de ano/mês e de empresa
+alteram apenas essa nova seção. Resumo e detalhe mensal vêm prontos do SQL;
+nunca somar os níveis total/ano/mês. Empates dos rankings são alfabéticos.
 
 Ordenar, filtrar, top 10, traduções de rótulos e formatação são permitidos. Não
 agregar, juntar ou criar indicadores em pandas. Funções de gráficos não alteram
@@ -44,6 +47,7 @@ MARTS = (
     "evidencias",
     "familias_ocupacionais",
     "concentracao_empresas",
+    "empresas_periodo",
 )
 COR = "#2563EB"
 TEMAS = {
@@ -78,7 +82,12 @@ TEMAS = {
 }
 MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 CARTOES = (
-    ("eventos_corte", "Eventos de corte", "numero", "Somente eventos classificados como cut."),
+    (
+        "eventos_corte",
+        "Eventos de corte",
+        "numero",
+        "Registros de corte: um evento pode atingir várias pessoas. Não é a quantidade de pessoas demitidas.",
+    ),
     ("empresas_com_cortes", "Empresas com cortes", "numero", "Nomes distintos entre os cortes."),
     (
         "postos_contabilizados",
@@ -346,7 +355,7 @@ def postos_por_empresa(dados):
         ordenado,
         "empresa",
         "postos_contabilizados",
-        "EMPRESAS EM DESTAQUE<br><sup>Dez maiores totais conhecidos</sup>",
+        "MAIORES TOTAIS DE POSTOS<br><sup>Postos conhecidos · não é quantidade de eventos</sup>",
         "Postos contabilizados",
     )
 
@@ -517,8 +526,8 @@ def tabela_empresas(dados):
         for linha in empresas.itertuples(index=False)
     )
     return (
-        '<div class="company-table"><h3>QUADRO DE EMPRESAS <span>Top 5 · postos conhecidos</span></h3>'
-        "<table><thead><tr><th>Empresa</th><th>Cortes</th><th>Postos</th></tr></thead>"
+        '<div class="company-table"><h3>TOP 5 POR POSTOS CONHECIDOS</h3>'
+        "<table><thead><tr><th>Empresa</th><th>Eventos de corte</th><th>Postos</th></tr></thead>"
         f"<tbody>{linhas}</tbody></table></div>"
     )
 
@@ -589,3 +598,90 @@ def figuras(dados, tema="claro"):
         concentracao_empresas(dados["concentracao_empresas"]),
     ]
     return [aplicar_tema(figura, tema) for figura in prontas]
+
+
+def selecionar_periodo(dados, ano=None, mes=None):
+    """Filtrar o nível já agregado no SQL, sem somar meses nem misturar níveis."""
+    if mes is not None and ano is None:
+        raise ValueError("Escolha um ano antes do mês")
+    tipo = "mes" if mes is not None else "ano" if ano is not None else "total"
+    filtro = dados["tipo_periodo"].eq(tipo)
+    datas = pd.to_datetime(dados["inicio_periodo"])
+    if ano is not None:
+        filtro &= datas.dt.year.eq(ano)
+    if mes is not None:
+        filtro &= datas.dt.month.eq(mes)
+    return dados.loc[filtro].copy()
+
+
+def ranking_eventos_empresa(dados):
+    ordenado = dados.loc[dados["eventos_corte"] > 0].sort_values("posicao_eventos").head(5)
+    figura = _barras(
+        ordenado,
+        "empresa",
+        "eventos_corte",
+        "TOP 5 · MAIS EVENTOS DE CORTE",
+        "Eventos de corte (registros)",
+        altura=300,
+    )
+    figura.update_xaxes(dtick=1)
+    if ordenado.empty:
+        figura.layout.annotations[0].text = "Nenhum evento de corte<br>registrado neste período"
+    return figura
+
+
+def ranking_ia_empregador(dados):
+    ordenado = dados.loc[dados["ia_empregador"] > 0].sort_values("posicao_ia_empregador").head(5)
+    figura = _barras(
+        ordenado,
+        "empresa",
+        "ia_empregador",
+        "TOP 5 · EMPREGADOR CITOU IA",
+        "Eventos com IA citada pelo empregador",
+        altura=300,
+    )
+    figura.update_xaxes(dtick=1)
+    if ordenado.empty:
+        figura.layout.annotations[
+            0
+        ].text = "Sem eventos com IA citada<br>pelo empregador neste período"
+    return figura
+
+
+def figuras_empresas(dados, periodo="Todo o registro", tema="claro"):
+    if len(dados[["tipo_periodo", "inicio_periodo"]].drop_duplicates()) > 1:
+        raise ValueError("Ranking exige um único período; não misture total, anos ou meses")
+    prontas = [ranking_eventos_empresa(dados), ranking_ia_empregador(dados)]
+    for figura in prontas:
+        figura.update_layout(
+            title_text=figura.layout.title.text + f"<br><sup>{escape(periodo)}</sup>"
+        )
+        aplicar_tema(figura, tema)
+    return prontas
+
+
+def quadro_eventos(dados, mensal=False):
+    """Selecionar/ordenar contagens prontas; nenhum cálculo ou pivô na tela."""
+    colunas = {
+        "empresa": "Empresa",
+        "eventos_corte": "Eventos de corte",
+        "ia_empregador": "Empregador citou IA",
+        "ia_entre_fatores": "IA entre os motivos",
+        "ia_outras_fontes": "Associação por outras fontes",
+        "ia_nao_classificada": "Sem classificação",
+    }
+    ordem = ["inicio_periodo", "empresa"] if mensal else ["posicao_eventos"]
+    ordenado = dados.sort_values(ordem).copy()
+    quadro = ordenado[list(colunas)].rename(columns=colunas)
+    if mensal:
+        quadro.insert(0, "Mês do evento", ordenado["inicio_periodo"].map(mes_ano))
+    return quadro.reset_index(drop=True)
+
+
+def tabela_eventos_html(dados, mensal=False):
+    titulo = "MESES COM EVENTOS REGISTRADOS" if mensal else "EVENTOS POR EMPRESA NO PERÍODO"
+    return (
+        f'<div class="company-table"><h3>{titulo}</h3><div class="event-table">'
+        + quadro_eventos(dados, mensal=mensal).to_html(index=False, border=0, escape=True)
+        + "</div></div>"
+    )

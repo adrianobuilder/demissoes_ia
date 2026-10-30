@@ -17,7 +17,7 @@ PROVENIENCIA = {"snapshot": "2030-01-01", "metodologia": "0.1"}
 HORA = datetime(2030, 4, 5, 12, 0, tzinfo=relatorio.FUSO)
 
 
-def test_sete_cartoes_quatro_faixas_ids_cdn_e_tamanho():
+def test_sete_cartoes_cinco_faixas_nove_figuras_ids_cdn_e_tamanho():
     html = relatorio.montar_html(dados_sinteticos(), HORA, PROVENIENCIA)
     assert re.findall(r'<p class="valor">([^<]+)</p>', html) == [
         "3",
@@ -33,10 +33,11 @@ def test_sete_cartoes_quatro_faixas_ids_cdn_e_tamanho():
         "faixa02",
         "faixa03",
         "faixa04",
+        "faixa05",
     ]
-    assert re.findall(r'<div id="(g[0-9]+)"', html) == [f"g{i:02}" for i in range(1, 8)]
+    assert re.findall(r'<div id="(g[0-9]+)"', html) == [f"g{i:02}" for i in range(1, 10)]
     assert html.count('src="https://cdn.plot.ly/') == 1
-    assert html.count("Plotly.newPlot(") == 7
+    assert html.count("Plotly.newPlot(") == 9
     assert 'lang="pt-BR"' in html and '<meta charset="utf-8">' in html
     assert len(html.encode("utf-8")) < 200 * 1024
     # Plotly escapa barras como \u002f dentro do JSON embutido no HTML.
@@ -53,9 +54,11 @@ def test_duas_geracoes_mudam_so_rodape():
     assert antes.replace("Dados de 05/04/2030 12:00", "Dados de 05/04/2030 12:01") == depois
 
 
-def test_reutiliza_as_sete_funcoes_de_painel(monkeypatch):
+def test_reutiliza_as_nove_funcoes_de_painel(monkeypatch):
     chamadas = []
     nomes = [
+        "ranking_eventos_empresa",
+        "ranking_ia_empregador",
         "cortes_mensais",
         "eventos_por_atribuicao",
         "postos_por_empresa",
