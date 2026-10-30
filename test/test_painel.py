@@ -142,7 +142,10 @@ def test_sete_figuras_preservam_dados_e_usam_valores_recebidos():
     assert list(figuras[2].data[0].x) == [2, 1]
     assert list(figuras[3].data[0].x) == [2, 1]
     assert list(figuras[4].data[0].y) == ["Engenharia", "Operações"]
-    assert list(figuras[5].data[0].y) == ["Tier 1", "Tier 2"]
+    assert [rotulo.replace("<br>", " ") for rotulo in figuras[5].data[0].y] == [
+        "Nível 1 · Fontes primárias",
+        "Nível 2 · Jornalismo",
+    ]
     assert list(figuras[6].data[0].x) == [1, 2]
     assert list(figuras[6].data[0].y) == [66.67, 100]
     assert figuras[6].layout.shapes[0].y0 == 80
@@ -201,3 +204,24 @@ def test_painel_nao_importa_streamlit_nem_agrega_medidas():
         for n in ast.walk(arvore)
         if isinstance(n, ast.Import) and any(a.name == "streamlit" for a in n.names)
     ]
+
+
+def test_temas_preservam_valores_e_lacunas():
+    dados = dados_sinteticos()
+    claro = painel.figuras(dados, tema="claro")
+    escuro = painel.figuras(dados, tema="escuro")
+    assert len(claro) == len(escuro) == 7
+    for figura_clara, figura_escura in zip(claro, escuro, strict=True):
+        assert figura_clara.layout.paper_bgcolor == painel.TEMAS["claro"]["superficie"]
+        assert figura_escura.layout.paper_bgcolor == painel.TEMAS["escuro"]["superficie"]
+        for serie_clara, serie_escura in zip(figura_clara.data, figura_escura.data, strict=True):
+            pd.testing.assert_series_equal(pd.Series(serie_clara.x), pd.Series(serie_escura.x))
+            pd.testing.assert_series_equal(pd.Series(serie_clara.y), pd.Series(serie_escura.y))
+    assert escuro[0].data[0].connectgaps is False
+    assert escuro[6].layout.shapes[0].y0 == 80
+
+
+def test_tema_invalido_tem_erro_claro():
+    with pytest.raises(ValueError, match="Tema inválido"):
+        painel.figuras(dados_sinteticos(), tema="inexistente")
+    assert set(painel.TEMAS) == {"claro", "escuro"}

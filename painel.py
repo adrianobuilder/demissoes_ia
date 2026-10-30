@@ -12,6 +12,10 @@ mensal. Os cartões e as outras figuras representam o snapshot inteiro.
 Ordenar, filtrar, top 10, traduções de rótulos e formatação são permitidos. Não
 agregar, juntar ou criar indicadores em pandas. Funções de gráficos não alteram
 seus DataFrames. Quantidade desconhecida mantém lacuna, com connectgaps=False.
+
+Apresentação modernizada: temas claro/escuro, títulos em linguagem de negócio,
+rótulos traduzidos e alturas menores. A troca de tema não altera valores, filtros
+ou o conjunto de figuras. O HTML mantém o tema claro por padrão.
 """
 
 import json
@@ -36,6 +40,36 @@ MARTS = (
     "concentracao_empresas",
 )
 COR = "#2563EB"
+TEMAS = {
+    "claro": {
+        "fundo": "#F2F5FA",
+        "superficie": "#FFFFFF",
+        "superficie_2": "#F7FAFF",
+        "texto": "#182B45",
+        "secundario": "#52657E",
+        "borda": "#DDE5EF",
+        "grade": "#E7EDF5",
+        "acento": "#2463D5",
+        "acento_suave": "#EAF1FF",
+        "sobre_acento": "#FFFFFF",
+        "hero": "#102E57",
+        "sombra": "0 6px 22px rgba(27,55,90,.045)",
+    },
+    "escuro": {
+        "fundo": "#0B1120",
+        "superficie": "#121D2F",
+        "superficie_2": "#18253A",
+        "texto": "#E4ECF8",
+        "secundario": "#A4B5CD",
+        "borda": "#2A3850",
+        "grade": "#26354D",
+        "acento": "#78B4FF",
+        "acento_suave": "#1D3555",
+        "sobre_acento": "#09162B",
+        "hero": "#10274D",
+        "sombra": "none",
+    },
+}
 MESES = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
 CARTOES = (
     ("eventos_corte", "Eventos de corte", "numero", "Somente eventos classificados como cut."),
@@ -80,7 +114,34 @@ TRADUCOES = {
     "partial": "Parcial",
     "reversed": "Revertido",
     "unknown": "Desconhecido",
+    "Not specified": "Não especificado",
+    "Software engineering and IT": "Engenharia de software e TI",
+    "Corporate functions": "Funções corporativas",
+    "Sales and marketing": "Vendas e marketing",
+    "Customer service and support": "Atendimento e suporte",
+    "Management layers": "Camadas de gestão",
+    "Operations and back office": "Operações e apoio",
+    "Product and design": "Produto e design",
+    "Writing, editorial and translation": "Redação, edição e tradução",
+    "Consulting and professional services": "Consultoria e serviços profissionais",
+    "Content moderation": "Moderação de conteúdo",
+    "Frontline and manual work": "Trabalho operacional e manual",
+    "Tier 1": "Nível 1 · Fontes primárias",
+    "Tier 2": "Nível 2 · Jornalismo",
+    "Tier 3": "Nível 3 · Evidência limitada",
 }
+
+
+def paleta(tema="claro"):
+    if tema not in TEMAS:
+        raise ValueError(f"Tema inválido: {tema}")
+    return TEMAS[tema]
+
+
+def estilos(tema="claro"):
+    variaveis = ";".join(f"--{nome}:{valor}" for nome, valor in paleta(tema).items())
+    css = (db.RAIZ / "design" / "painel.css").read_text(encoding="utf-8")
+    return f"<style>:root{{{variaveis}}}{css}</style>"
 
 
 def ler(marts=MARTS) -> dict[str, pd.DataFrame]:
@@ -147,13 +208,13 @@ def cartoes(dados) -> list[dict[str, str]]:
     return resultado
 
 
-def _acabamento(fig, titulo, altura=680):
+def _acabamento(fig, titulo, altura=480):
     fig.update_layout(
         template="plotly_white",
-        title={"text": titulo, "x": 0, "xanchor": "left", "font_size": 17},
-        font={"family": "Arial, sans-serif", "size": 13, "color": "#172033"},
+        title={"text": titulo, "x": 0, "xanchor": "left", "font_size": 16},
+        font={"family": "Arial, sans-serif", "size": 12, "color": "#182B45"},
         height=altura,
-        margin={"l": 12, "r": 30, "t": 100, "b": 65},
+        margin={"l": 12, "r": 38, "t": 76, "b": 58},
         separators=",.",
         colorway=[COR],
         showlegend=False,
@@ -165,7 +226,7 @@ def _acabamento(fig, titulo, altura=680):
     return fig
 
 
-def _vazio(titulo, altura=680):
+def _vazio(titulo, altura=480):
     fig = _acabamento(go.Figure(), titulo, altura)
     fig.add_annotation(
         text="Sem observações para exibir",
@@ -214,7 +275,7 @@ def _barras(dados, categoria, valor, titulo, unidade):
 def cortes_mensais(dados):
     ordenado = dados.sort_values("mes")
     if ordenado.empty:
-        return _vazio("01 · Postos contabilizados por mês", 380)
+        return _vazio("Postos contabilizados por mês", 360)
     periodo = f"{mes_ano(ordenado.iloc[0]['mes'])} a {mes_ano(ordenado.iloc[-1]['mes'])}"
     fig = go.Figure(
         go.Scatter(
@@ -230,7 +291,7 @@ def cortes_mensais(dados):
             "<br>Eventos quantificados: %{customdata[1]}<extra></extra>",
         )
     )
-    _acabamento(fig, f"01 · Postos contabilizados por mês<br><sup>{periodo}</sup>", 380)
+    _acabamento(fig, f"Postos contabilizados por mês<br><sup>{periodo}</sup>", 360)
     ticks = ordenado["mes"].iloc[::6].tolist()
     if ticks[-1] != ordenado.iloc[-1]["mes"]:
         ticks.append(ordenado.iloc[-1]["mes"])
@@ -255,7 +316,7 @@ def postos_por_empresa(dados):
         ordenado,
         "empresa",
         "postos_contabilizados",
-        "03 · Empresas com mais postos<br><sup>Dez maiores totais contabilizados</sup>",
+        "Empresas com mais postos<br><sup>Dez maiores totais contabilizados</sup>",
         "Postos contabilizados",
     )
 
@@ -266,7 +327,7 @@ def eventos_por_atribuicao(dados):
         ordenado,
         "atribuicao_ia",
         "eventos_corte",
-        "04 · Atribuição à IA<br><sup>Classificação da fonte</sup>",
+        "Atribuição à IA<br><sup>Classificação da fonte</sup>",
         "Eventos de corte",
     )
 
@@ -277,36 +338,38 @@ def eventos_por_execucao(dados):
         ordenado,
         "situacao_execucao",
         "eventos_corte",
-        "05 · Situação de execução",
+        "Situação de execução",
         "Eventos de corte",
     )
 
 
 def eventos_por_familia(dados):
     ordenado = dados.sort_values(["eventos_corte", "familia_ocupacional"], ascending=[False, True])
-    return _barras(
+    figura = _barras(
         ordenado,
         "familia_ocupacional",
         "eventos_corte",
-        "07 · Famílias ocupacionais<br><sup>Eventos podem aparecer em várias famílias</sup>",
+        "Famílias ocupacionais<br><sup>Um evento pode pertencer a várias famílias</sup>",
         "Eventos distintos de corte",
     )
+    return figura.update_layout(height=600)
 
 
 def eventos_por_evidencia(dados):
-    return _barras(
+    figura = _barras(
         dados.sort_values("nivel_evidencia"),
         "nivel_evidencia",
         "eventos_corte",
-        "06 · Nível de evidência<br><sup>Não equivale ao grau de atribuição à IA</sup>",
+        "Qualidade das evidências<br><sup>Classificação informada pela fonte</sup>",
         "Eventos de corte",
     )
+    return figura.update_layout(height=600)
 
 
 def concentracao_empresas(dados):
     ordenado = dados.sort_values("posicao")
     if ordenado.loc[ordenado["pct_acumulado"].notna()].empty:
-        return _vazio("08 · Concentração por empresa")
+        return _vazio("Concentração por empresa", 600)
     fig = go.Figure(
         go.Scatter(
             x=ordenado["posicao"],
@@ -320,7 +383,7 @@ def concentracao_empresas(dados):
         )
     )
     _acabamento(
-        fig, "08 · Concentração por empresa<br><sup>Acumulado dos postos contabilizados</sup>"
+        fig, "Concentração por empresa<br><sup>Acumulado dos postos contabilizados</sup>", 600
     )
     fig.add_hline(y=80, line_dash="dash", line_color="#64748B")
     fig.update_xaxes(title_text="Posição da empresa", rangemode="tozero", tickformat=",.0f")
@@ -328,8 +391,48 @@ def concentracao_empresas(dados):
     return fig
 
 
-def figuras(dados):
-    return [
+def aplicar_tema(figura, tema="claro"):
+    cores = paleta(tema)
+    figura.update_layout(
+        paper_bgcolor=cores["superficie"],
+        plot_bgcolor=cores["superficie"],
+        font_color=cores["texto"],
+        title_font_color=cores["texto"],
+        hoverlabel={
+            "bgcolor": cores["superficie_2"],
+            "font_color": cores["texto"],
+            "bordercolor": cores["borda"],
+        },
+    )
+    figura.update_xaxes(
+        gridcolor=cores["grade"],
+        zerolinecolor=cores["borda"],
+        tickfont_color=cores["secundario"],
+        title_font_color=cores["secundario"],
+    )
+    figura.update_yaxes(
+        gridcolor=cores["grade"],
+        zerolinecolor=cores["borda"],
+        tickfont_color=cores["secundario"],
+        title_font_color=cores["secundario"],
+    )
+    figura.update_traces(marker_color=cores["acento"], width=0.58, selector={"type": "bar"})
+    figura.update_traces(
+        line_color=cores["acento"],
+        marker_color=cores["acento"],
+        line_width=2.5,
+        selector={"type": "scatter"},
+    )
+    for forma in figura.layout.shapes:
+        forma.line.color = cores["secundario"]
+    for anotacao in figura.layout.annotations:
+        anotacao.font.color = cores["secundario"]
+    return figura
+
+
+def figuras(dados, tema="claro"):
+    paleta(tema)
+    prontas = [
         cortes_mensais(dados["cortes_mensais"]),
         postos_por_empresa(dados["empresas"]),
         eventos_por_atribuicao(dados["atribuicao_ia"]),
@@ -338,3 +441,4 @@ def figuras(dados):
         eventos_por_evidencia(dados["evidencias"]),
         concentracao_empresas(dados["concentracao_empresas"]),
     ]
+    return [aplicar_tema(figura, tema) for figura in prontas]

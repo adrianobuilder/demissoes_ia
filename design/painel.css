@@ -1,0 +1,118 @@
+.stApp {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stAppDeployButton"] { display: none; }
+[data-testid="stMainBlockContainer"] {
+  max-width: 1580px;
+  padding: 24px 32px 36px;
+}
+.stApp [data-testid="stWidgetLabel"],
+.stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stExpander"] { color: var(--texto); }
+.stApp [data-testid="stCaptionContainer"] { color: var(--secundario); }
+.stApp a { color: var(--acento); }
+.app-brand { display: flex; align-items: center; gap: 11px; min-height: 40px; }
+.app-brand .marca {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 11px; background: var(--hero); color: #fff;
+  font-size: 16px; font-weight: 800; letter-spacing: -1px;
+}
+.app-brand strong { display: block; font-size: 13px; letter-spacing: 1.5px; color: var(--texto); }
+.app-brand small { display: block; font-size: 11px; color: var(--secundario); }
+.st-key-barra_superior button { min-height: 40px; border-radius: 9px; }
+.st-key-barra_superior button[kind="secondary"] {
+  background: var(--superficie); border-color: var(--borda); color: var(--texto);
+}
+.st-key-alternar_tema button {
+  color: var(--secundario); background: var(--superficie); border-color: var(--borda);
+}
+.st-key-alternar_tema button[aria-pressed="true"],
+.st-key-alternar_tema button[data-testid$="segmentedControlActive"] {
+  color: var(--sobre_acento); background: var(--acento); border-color: var(--acento);
+}
+.hero {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  background: var(--hero); border: 1px solid rgba(150,183,234,.17);
+  border-radius: 18px; padding: 26px 30px; color: #f6f9ff;
+  box-shadow: var(--sombra);
+}
+.hero .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.8px; color: #a5c5f7; }
+.hero h1 { margin: 9px 0 8px; color: #fff; font-size: clamp(25px,2.5vw,35px); line-height: 1.2; font-weight: 700; letter-spacing: -.8px; }
+.hero p { max-width: 780px; margin: 0; color: #c7d8f0; font-size: 13px; line-height: 1.6; }
+.hero-meta { flex-shrink: 0; text-align: right; }
+.hero-meta span { display: block; color: #b6cceb; font-size: 11px; margin: 3px 0; }
+.hero-meta strong { display: block; color: #fff; font-size: 20px; letter-spacing: -.3px; }
+.hero-meta .selo { display: inline-block; margin-top: 10px; border: 1px solid #5776a1; border-radius: 20px; padding: 5px 10px; color: #d6e5fa; font-size: 10px; }
+.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin: 5px 0 0; }
+.section-heading h2 { color: var(--texto); margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.3px; }
+.section-heading p { color: var(--secundario); font-size: 12px; margin: 4px 0 0; }
+.section-hint { color: var(--secundario); font-size: 11px; text-align: right; }
+.st-key-cartoes [data-testid="stMetric"] {
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-top: 3px solid var(--acento); border-radius: 12px;
+  padding: 16px 14px; min-height: 147px; box-shadow: var(--sombra);
+}
+.st-key-cartoes [data-testid="stMetricLabel"] { color: var(--secundario); }
+.st-key-cartoes [data-testid="stMetricLabel"] p {
+  color: var(--secundario); font-size: 12px; line-height: 1.45; font-weight: 600;
+  white-space: normal; text-overflow: clip; overflow: visible;
+}
+.st-key-cartoes [data-testid="stMetricValue"] {
+  color: var(--texto); font-size: clamp(25px,2.25vw,33px);
+  font-weight: 650; letter-spacing: -.8px; font-variant-numeric: tabular-nums;
+}
+.st-key-cartoes [data-testid="stMetric"] svg { color: var(--acento); }
+.st-key-cartoes [data-testid="stMetric"] [data-testid="stIconMaterial"] { color: var(--acento); }
+.aviso {
+  display: flex; gap: 10px; align-items: start; background: var(--acento_suave);
+  border: 1px solid var(--borda); border-radius: 10px; padding: 12px 15px;
+  color: var(--secundario); font-size: 12px; line-height: 1.65;
+}
+.aviso b { color: var(--texto); font-weight: 600; }
+.aviso .simbolo { color: var(--acento); font-weight: 700; font-size: 16px; line-height: 1.2; }
+.st-key-evolucao,
+.st-key-graficos [class*="st-key-quadro_"] {
+  background: var(--superficie); border: 1px solid var(--borda);
+  border-radius: 14px; padding: 14px; box-shadow: var(--sombra);
+}
+.st-key-filtro_periodo { padding: 2px 12px 0; }
+.st-key-filtro_periodo [data-testid="stSlider"] { color: var(--secundario); }
+.st-key-filtro_periodo [data-testid="stWidgetLabel"] p { color: var(--secundario); font-size: 12px; }
+.st-key-filtro_periodo [role="slider"] { background-color: var(--acento); border-color: var(--acento); }
+.stApp .js-plotly-plot .modebar { background: transparent !important; }
+.stApp .js-plotly-plot .modebar-btn path { fill: var(--secundario) !important; }
+.stApp [data-testid="stExpander"] details { background: var(--superficie); border-color: var(--borda); border-radius: 12px; }
+.stApp [data-testid="stExpander"] summary { color: var(--texto); }
+.rodape {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  padding-top: 16px; border-top: 1px solid var(--borda);
+  color: var(--secundario); font-size: 11px; line-height: 1.7;
+}
+.rodape strong { color: var(--texto); font-weight: 600; }
+.rodape a { color: var(--acento); text-decoration: none; }
+@media (max-width: 1250px) {
+  .st-key-cartoes [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  .st-key-cartoes [data-testid="stColumn"] { flex: 1 1 180px !important; min-width: 180px !important; }
+}
+@media (max-width: 1050px) {
+  .st-key-graficos [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  .st-key-graficos [data-testid="stColumn"] { flex: 1 1 100% !important; min-width: 0 !important; }
+  .hero { padding: 24px; }
+}
+@media (max-width: 650px) {
+  [data-testid="stMainBlockContainer"] { padding: 20px 14px 28px; }
+  .hero { display: block; padding: 22px; }
+  .hero-meta { text-align: left; margin-top: 18px; }
+  .hero-meta strong { font-size: 17px; }
+  .hero-meta span { display: inline-block; margin-right: 8px; }
+  .hero-meta .selo { margin-top: 0; }
+  .section-heading { display: block; }
+  .section-hint { margin-top: 5px; text-align: left; }
+  .st-key-cartoes [data-testid="stHorizontalBlock"] { gap: 12px; }
+  .st-key-cartoes [data-testid="stColumn"] { flex: 1 1 calc(50% - 12px) !important; min-width: 135px !important; }
+  .st-key-cartoes [data-testid="stMetricValue"] { font-size: 29px; }
+  .st-key-cartoes [data-testid="stMetric"] { min-height: 140px; }
+}
