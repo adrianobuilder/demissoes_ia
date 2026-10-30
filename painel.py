@@ -292,9 +292,11 @@ def cortes_mensais(dados):
         )
     )
     _acabamento(fig, f"Postos contabilizados por mês<br><sup>{periodo}</sup>", 360)
-    ticks = ordenado["mes"].iloc[::6].tolist()
-    if ticks[-1] != ordenado.iloc[-1]["mes"]:
-        ticks.append(ordenado.iloc[-1]["mes"])
+    # Até quatro datas legíveis também na largura de um celular; os dados
+    # mensais completos continuam na curva e no hover.
+    ultimo = len(ordenado) - 1
+    indices = [0, ultimo] if ultimo < 3 else [0, ultimo // 3, 2 * ultimo // 3, ultimo]
+    ticks = ordenado["mes"].iloc[sorted(set(indices))].tolist()
     fig.update_xaxes(
         title_text=None,
         tickmode="array",
