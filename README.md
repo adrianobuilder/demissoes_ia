@@ -29,7 +29,8 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 - **A — fonte e pergunta:** cópia preservada, licença conferida e perfil registrado. Há 320 eventos e 498 pares evento–família, cobrindo os mesmos 320 IDs sem órfãos na derivação diagnóstica. Esses valores não são expectativas dos testes unitários.
 - **B — ambiente:** Python 3.14.3, DuckDB 2.0.0, pandas 3.1.0, Streamlit 1.66.1 e Plotly 7.1.0 disponíveis. pytest-cov acrescentado; coleta em `test/`, cobertura total mínima de 60% e Ruff configurados.
 - **C — infraestrutura e ingestão:** 12 testes sintéticos aprovados; carga real conferida com 320 linhas em `raw.eventos`.
-- **D a G — transformação, SQLs, apresentação e validação:** pendentes.
+- **D — transformação:** seis novos testes aprovados, incluindo conflito, conversões, vazio e rollback tardio. Cópia real: 320 eventos e 498 associações, com zero órfãos; quantidades ausentes preservadas.
+- **E a G — SQLs, apresentação e validação:** pendentes.
 
 ## Preparar o ambiente
 
@@ -49,6 +50,15 @@ Após preparar o ambiente, a etapa de ingestão já pode ser reproduzida:
 uv run python -m pipeline.ingestao
 uv run pytest test/test_db.py test/test_ingestao.py
 ```
+
+Transformação e seus testes:
+
+```powershell
+uv run python -m pipeline.transformacao
+uv run pytest test/test_transformacao.py
+```
+
+`refined.eventos` preserva o texto original de famílias. `refined.evento_familia` contém apenas as duas colunas da associação, sem replicar a quantidade de postos. Os dois destinos são substituídos na mesma transação; uma falha preserva ambos.
 
 ## Limites de interpretação
 
