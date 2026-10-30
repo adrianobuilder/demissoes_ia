@@ -1,0 +1,113 @@
+"""Gerar relatorio.html na raiz, reutilizando exclusivamente painel.py.
+
+Spec: sete cartões HTML, sete figuras nas mesmas quatro faixas do app; período
+mensal completo, sem filtro. Um só arquivo com CSS embutido, Plotly CDN somente
+no primeiro gráfico, div_id g01..g07 fixos. Menos de 200 KB. Com dados/ambiente
+iguais, só varia o rodapé 'Dados de DD/MM/AAAA HH:MM', em America/Sao_Paulo.
+Snapshot da fonte é identificado separadamente. stdout UTF-8 com caminho e KB.
+Não importar Streamlit nem app.py; não criar outros gráficos ou indicadores.
+"""
+
+from datetime import date, datetime
+from html import escape
+from zoneinfo import ZoneInfo
+
+import duckdb
+
+import painel
+from pipeline import db
+
+SAIDA = db.RAIZ / "relatorio.html"
+FUSO = ZoneInfo("America/Sao_Paulo")
+LIMITE_BYTES = 200 * 1024
+CSS = """
+* { box-sizing: border-box; }
+body { margin: 0; background: #f5f7fa; color: #172033; font-family: Arial, sans-serif; }
+main { max-width: 1640px; margin: auto; padding: 32px 24px; }
+h1 { font-size: 30px; margin: 0 0 12px; line-height: 1.25; }
+p { line-height: 1.5; }
+a { color: #1d4ed8; }
+.contexto, footer { color: #475569; font-size: 13px; }
+.cartoes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; margin: 24px 0 16px; }
+.cartao { background: white; padding: 16px; border: 1px solid #dce3ec; border-radius: 8px; }
+.cartao h2 { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; }
+.valor { font-size: 28px; margin: 10px 0; font-variant-numeric: tabular-nums; }
+.definicao { margin: 0; color: #475569; font-size: 12px; }
+.grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grafico { min-width: 0; overflow: hidden; background: white; border: 1px solid #dce3ec; border-radius: 8px; }
+.faixa { margin-top: 20px; }
+footer { margin-top: 28px; border-top: 1px solid #dce3ec; padding-top: 16px; }
+@media (max-width: 1250px) { .cartoes { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .grade { grid-template-columns: 1fr; } }
+@media (max-width: 650px) {
+  main { padding: 24px 12px; }
+  h1 { font-size: 25px; }
+  .cartoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cartao { padding: 12px; }
+}
+"""
+
+
+def montar_html(dados, gerado_em: datetime, proveniencia: dict) -> str:
+    cartoes = []
+    for cartao in painel.cartoes(dados):
+        cartoes.append(
+            '<article class="cartao">'
+            f"<h2>{escape(cartao['titulo'])}</h2>"
+            f'<p class="valor">{escape(cartao["valor"])}</p>'
+            f'<p class="definicao">{escape(cartao["ajuda"])}</p></article>'
+        )
+    graficos = []
+    for indice, figura in enumerate(painel.figuras(dados), start=1):
+        fragmento = figura.to_html(
+            full_html=False,
+            include_plotlyjs="cdn" if indice == 1 else False,
+            div_id=f"g{indice:02}",
+            config={"responsive": True, "displaylogo": False},
+        )
+        graficos.append(f'<article class="grafico">{fragmento}</article>')
+    snapshot = date.fromisoformat(proveniencia["snapshot"]).strftime("%d/%m/%Y")
+    metodologia = escape(str(proveniencia["metodologia"]))
+    horario = gerado_em.astimezone(FUSO).strftime("%d/%m/%Y %H:%M")
+    return f"""<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de demissões associadas à IA</title><style>{CSS}</style></head>
+<body><main>
+<header><h1>Registro de demissões associadas à IA</h1>
+<p class="contexto">Fonte: <a href="https://ailayoffs.org">AI Layoffs Index</a> ·
+Snapshot da fonte: {snapshot} · metodologia v{metodologia}.</p></header>
+<section id="faixa01" class="cartoes" aria-label="Indicadores do snapshot">{"".join(cartoes)}</section>
+<p class="contexto">Cartões e comparações representam o snapshot inteiro. O gráfico mensal mostra
+o período completo disponível. Postos contabilizados podem estar anunciados ou parcialmente
+executados. Associação à IA não comprova causalidade; quantidade desconhecida não significa zero.</p>
+<section id="faixa02" class="faixa" aria-label="Evolução mensal">{graficos[0]}</section>
+<section id="faixa03" class="faixa grade" aria-label="Empresas, atribuição e execução">{"".join(graficos[1:4])}</section>
+<section id="faixa04" class="faixa grade" aria-label="Famílias, evidência e concentração">{"".join(graficos[4:7])}</section>
+<p class="contexto">Um evento pode pertencer a várias famílias ocupacionais. Não somar as contagens
+por família nem adicionar postos reportados não contabilizados aos contabilizados.</p>
+<footer><p>Dados de {horario}</p>
+<p>Gerado a partir do snapshot identificado no cabeçalho; este arquivo não consulta o banco.
+Os gráficos precisam de internet para carregar Plotly pelo CDN.</p>
+<p>Fontes de cada evento no
+<a href="https://github.com/adrianobuilder/demissoes_ia/blob/main/raw/ai-layoffs-register.csv">CSV do registro</a>.
+Esta análise não é uma leitura oficial do índice e não implica endosso do publicador.</p></footer>
+</main></body></html>
+"""
+
+
+def main():
+    db.configurar_stdout()
+    try:
+        html = montar_html(painel.ler(), datetime.now(FUSO), painel.proveniencia())
+        tamanho = len(html.encode("utf-8"))
+        if tamanho >= LIMITE_BYTES:
+            raise ValueError("Relatório deve ter menos de 200 KB; arquivo anterior preservado")
+        SAIDA.write_text(html, encoding="utf-8", newline="\n")
+    except (OSError, ValueError, KeyError, duckdb.Error) as exc:
+        raise SystemExit(f"Erro no relatório: {exc}") from exc
+    print(f"Relatório: {SAIDA.resolve()} ({painel.numero(tamanho / 1024, 1)} KB)")
+
+
+if __name__ == "__main__":
+    main()

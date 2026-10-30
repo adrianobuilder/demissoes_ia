@@ -33,7 +33,8 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 - **E — indicadores SQL:** oito marts e seis novos testes aprovados. Cópia real: 402 linhas materializadas; o JOIN de cortes tem 475 associações para 302 IDs distintos. Totais mensal e por empresa reconciliam em 83.847 postos contabilizados.
 - **F1 — biblioteca de apresentação:** `painel.py` entregue com sete cartões, sete figuras e 11 testes aprovados. Sem Streamlit ou agregações de negócio; leitura read-only curta e figuras sem mutação dos dados.
 - **F2 — app:** sete cartões/figuras, cache, recarga e filtro mensal verificados com Streamlit AppTest. Disposição conferida no Chrome em largura normal e 768 px; cartões e gráficos se reorganizam na tela menor.
-- **F3 e G — HTML e validação final:** pendentes.
+- **F3 — HTML:** sete testes aprovados, mesmas figuras/cartões, IDs fixos, CDN único e determinismo do rodapé. Arquivo real gerado com 67,8 KB. A abertura automática de `file://` foi bloqueada pela política do navegador da ferramenta; conferir visualmente com dois cliques ainda é uma verificação manual pendente.
+- **G — validação final e reprodução em clone limpo:** pendente.
 
 ## Preparar o ambiente
 
@@ -92,6 +93,15 @@ uv run streamlit run app.py
 ```
 
 Abrir o endereço mostrado pelo Streamlit. O filtro altera apenas o gráfico mensal; cartões e comparações mantêm o snapshot completo. `Recarregar dados` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados.
+
+## Relatório HTML
+
+```powershell
+uv run python relatorio.py
+uv run pytest test/test_relatorio.py
+```
+
+O comando imprime o caminho e o tamanho de `relatorio.html`, gerado na raiz. Abrir o arquivo com dois cliques. Ele contém o período padrão completo, sem filtro; a biblioteca Plotly vem do CDN e precisa de internet. O rodapé registra a geração em `America/Sao_Paulo`, separadamente do snapshot da fonte. Banco e HTML gerados não são versionados; os comandos os reconstroem.
 
 ## Limites de interpretação
 
