@@ -27,7 +27,20 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 ## Estado da construção
 
 - **A — fonte e pergunta:** cópia preservada, licença conferida e perfil registrado. Há 320 eventos e 498 pares evento–família, cobrindo os mesmos 320 IDs sem órfãos na derivação diagnóstica. Esses valores não são expectativas dos testes unitários.
-- **B a G — ambiente, pipeline, SQLs, apresentação e validação:** pendentes. Os contratos estão no guia; os comandos de reprodução serão incluídos à medida que os módulos forem verificados.
+- **B — ambiente:** Python 3.14.3, DuckDB 2.0.0, pandas 3.1.0, Streamlit 1.66.1 e Plotly 7.1.0 disponíveis. pytest-cov acrescentado; coleta em `test/`, cobertura total mínima de 60% e Ruff configurados.
+- **C a G — pipeline, SQLs, apresentação e validação:** pendentes. Os contratos estão no guia; os comandos de reprodução serão incluídos à medida que os módulos forem verificados.
+
+## Preparar o ambiente
+
+Pré-requisitos: Git, uv e Python compatível com `requires-python` no `pyproject.toml`. O uv pode obter o interpretador necessário.
+
+```powershell
+git clone https://github.com/adrianobuilder/demissoes_ia.git
+cd demissoes_ia
+uv sync --locked
+```
+
+O nome da pasta clonada pode diferir de `demissao_ia`; os caminhos de produção serão baseados na localização dos módulos. Os arquivos de entrada estão versionados. `.gitattributes` preserva os bytes do CSV e dos documentos originais, inclusive no Windows.
 
 ## Limites de interpretação
 

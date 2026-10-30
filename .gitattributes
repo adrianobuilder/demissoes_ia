@@ -1,0 +1,4 @@
+* text=auto eol=lf
+raw/*.csv -text
+fontes/README_dataset.md -text
+fontes/LICENSE_dataset.txt -text
