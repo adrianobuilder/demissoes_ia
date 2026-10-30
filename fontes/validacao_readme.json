@@ -1,0 +1,92 @@
+{
+  "data_verificacao": "2026-10-30",
+  "commit_codigo_validado": "89a8dd0dc81b7c0043d7dc96dd7530a0135a8dcf",
+  "escopo": "Revisao do README, confrontando codigo, lock, requisitos academicos e reproducao em clone limpo local.",
+  "clone_limpo": true,
+  "clone_iniciado_sem_banco": true,
+  "comandos_aprovados": [
+    "uv sync --locked",
+    "uv run pytest --cov",
+    "uv run python -m pipeline.ingestao",
+    "uv run python -m pipeline.transformacao",
+    "uv run python -m pipeline.marts",
+    "uv run python relatorio.py",
+    "uv run ruff check pipeline painel.py app.py relatorio.py test",
+    "uv run ruff format --check pipeline painel.py app.py relatorio.py test"
+  ],
+  "testes_unitarios": 52,
+  "cobertura_percentual": 97.85,
+  "instrucoes_medidas": 466,
+  "instrucoes_nao_executadas": 10,
+  "contagens": {
+    "raw.eventos": 320,
+    "refined.eventos": 320,
+    "refined.evento_familia": 498
+  },
+  "contagens_marts": {
+    "atribuicao_ia": 3,
+    "concentracao_empresas": 83,
+    "cortes_mensais": 45,
+    "empresas": 250,
+    "empresas_periodo": 839,
+    "evidencias": 3,
+    "execucao_cortes": 5,
+    "familias_ocupacionais": 12,
+    "kpis": 1
+  },
+  "total_marts": 9,
+  "linhas_marts": 1241,
+  "html_bytes": 125440,
+  "html_nove_figuras_ids_fixos_cdn_unico": true,
+  "versoes_python": "3.14.3",
+  "versoes_bibliotecas_iguais_ao_lock": {
+    "duckdb": "2.0.0",
+    "pandas": "3.1.0",
+    "plotly": "7.1.0",
+    "streamlit": "1.66.1",
+    "pytest": "9.2.0",
+    "pytest-cov": "7.1.0",
+    "ruff": "0.17.3",
+    "coverage": "7.17.0"
+  },
+  "sha256_csv_confere_no_clone": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674",
+  "repositorio": {
+    "url": "https://github.com/adrianobuilder/demissoes_ia",
+    "visibility": "public",
+    "owner_type": "User",
+    "fork": false,
+    "licenca_codigo_github": null,
+    "consulta": "GitHub connector get_repo + fetch da API publica"
+  },
+  "historico_commits_preservado": true,
+  "alteracoes_readme": [
+    "Objetivo e estado atual",
+    "Linguagens e bibliotecas com versoes",
+    "Arvore de pastas",
+    "Arquitetura e grao das tabelas",
+    "Regras de tratamento",
+    "Reproducao completa",
+    "Indicadores e filtros",
+    "Testes e evidencias",
+    "Matriz dos requisitos academicos",
+    "Problemas comuns",
+    "Licencas e pendencias",
+    "Autoria e contribuicoes",
+    "Secao final curta de erros da IA"
+  ],
+  "pendencias": [
+    "Escolher e adicionar licenca propria para o codigo",
+    "Conferir visualmente HTML local com dois cliques; file:// bloqueado pela ferramenta"
+  ],
+  "ci_versionado": false,
+  "sha256_codigo_validado": {
+    "app.py": "0244a392c1ee216fc7c707aa12afa9a64ab46cf1ae2ca4b352b97879f6c0001e",
+    "painel.py": "699d7f81673e1739a77890560e1f8138343681d52917bdb40501b69ec7b563c0",
+    "relatorio.py": "2c7d58e9b9be79199ac82f374c073061dc460e75d174c62e531e62ba8847c8f6",
+    "pipeline/__init__.py": "be0e099723cee185858ecf5c2762c2e05870a25cb2be14eaddec32f38da99dc1",
+    "pipeline/db.py": "ad7906b66168ee1070338eb02975c1c9d7f24ed8881f486a48c697e228f9e186",
+    "pipeline/ingestao.py": "8d01fadc74ff73731ac1c479a0f7a80668f865b201f9ec8efb559968c956518a",
+    "pipeline/marts.py": "43ea4fe8e6befd2da987c5091a91b5abde526d7990e334a1f927767154f7fed4",
+    "pipeline/transformacao.py": "c10a510604eeba4094b50d66fa4de5c603554bd329d5bb4a8ce13c5c7765f14c"
+  }
+}
