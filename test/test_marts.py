@@ -51,12 +51,12 @@ def base(tmp_path, monkeypatch):
     transformacao.executar()
 
 
-def test_oito_marts_formulas_join_calendario_e_populacoes(tmp_path, monkeypatch):
+def test_nove_marts_formulas_join_calendario_e_populacoes(tmp_path, monkeypatch):
     base(tmp_path, monkeypatch)
     saida = io.StringIO()
     with redirect_stdout(saida):
         marts.main()
-    assert "Total: 8 marts" in saida.getvalue()
+    assert "Total: 9 marts" in saida.getvalue()
     assert "✓ marts.kpis: 1 linhas" in saida.getvalue()
     with db.conectar() as con:
         assert con.execute("SELECT * FROM marts.kpis").fetchall() == [(3, 2, 30, 40, 66.7, 15.0, 1)]
@@ -94,6 +94,64 @@ def test_oito_marts_formulas_join_calendario_e_populacoes(tmp_path, monkeypatch)
             "SELECT count(*),count(DISTINCT e.evento_id) FROM refined.eventos e JOIN refined.evento_familia f USING(evento_id) WHERE tipo_evento='cut'"
         ).fetchall() == [(4, 3)]
     assert marts.executar() == marts.executar()
+
+
+def test_empresas_periodo_conta_eventos_sem_exigir_postos_e_separa_atribuicoes(
+    tmp_path, monkeypatch
+):
+    base(tmp_path, monkeypatch)
+    marts.executar()
+    with db.conectar() as con:
+        assert con.execute("""
+            SELECT empresa,eventos_corte,ia_empregador,ia_entre_fatores,ia_outras_fontes,
+                   eventos_periodo,ia_empregador_periodo,posicao_eventos,posicao_ia_empregador
+            FROM marts.empresas_periodo WHERE tipo_periodo='total' ORDER BY empresa
+        """).fetchall() == [("Alfa", 2, 0, 1, 1, 3, 1, 1, 2), ("Beta", 1, 1, 0, 0, 3, 1, 2, 1)]
+        assert con.execute("""
+            SELECT inicio_periodo,empresa,eventos_corte,ia_empregador
+            FROM marts.empresas_periodo WHERE tipo_periodo='mes' ORDER BY 1,2
+        """).fetchall() == [
+            (date(2024, 1, 1), "Alfa", 1, 0),
+            (date(2024, 3, 1), "Alfa", 1, 0),
+            (date(2024, 3, 1), "Beta", 1, 1),
+        ]
+        # A declaração de Gama não entra; o evento de Alfa sem postos entra.
+        assert con.execute(
+            "SELECT DISTINCT empresa FROM marts.empresas_periodo ORDER BY 1"
+        ).fetchall() == [("Alfa",), ("Beta",)]
+
+
+def test_empresas_periodo_anos_empate_e_atribuicao_ausente(tmp_path, monkeypatch):
+    preparar_raw(
+        tmp_path,
+        monkeypatch,
+        [
+            evento(**{"Event ID": "A", "Company": "Alfa", "Attribution": "explicit"}),
+            evento(
+                **{
+                    "Event ID": "B",
+                    "Company": "Beta",
+                    "Date": "2025-01-01",
+                    "Attribution": "explicit",
+                }
+            ),
+            evento(**{"Event ID": "C", "Company": "Gama", "Date": "2024-02-01", "Attribution": ""}),
+        ],
+    )
+    transformacao.executar()
+    sql = (db.PASTA_SQL / "09_empresas_periodo.sql").read_text(encoding="utf-8")
+    with db.conectar() as con:
+        con.execute("CREATE TABLE periodos AS " + sql)
+        assert con.execute("""
+            SELECT empresa,posicao_eventos,posicao_ia_empregador,ia_nao_classificada
+            FROM periodos WHERE tipo_periodo='total' ORDER BY empresa
+        """).fetchall() == [("Alfa", 1, 1, 0), ("Beta", 2, 2, 0), ("Gama", 3, 3, 1)]
+        assert con.execute(
+            "SELECT inicio_periodo,eventos_periodo FROM periodos WHERE tipo_periodo='ano' ORDER BY 1"
+        ).fetchall() == [(date(2024, 1, 1), 2), (date(2024, 1, 1), 2), (date(2025, 1, 1), 1)]
+        assert con.execute("SELECT count(*) FROM periodos WHERE empresa='Gama'").fetchall() == [
+            (3,)
+        ]
 
 
 def test_kpis_vazios_preservam_desconhecidos_e_denominador_zero(tmp_path, monkeypatch):
