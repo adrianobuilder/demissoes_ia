@@ -1,0 +1,16 @@
+{
+  "dataset": "AI Layoffs Register: AI-attributed job cuts",
+  "publicador": "AI Layoffs Index",
+  "url": "https://www.kaggle.com/datasets/ailayoffs/ai-layoffs-register-2023-2026-every-row-sourced",
+  "arquivo": "ai-layoffs-register.csv",
+  "snapshot": "2026-10-23",
+  "metodologia": "1.36",
+  "versao_kaggle": null,
+  "data_download": null,
+  "data_inspecao": "2026-10-30",
+  "sha256_csv": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674",
+  "licenca": "AI Layoffs Index and Register: Data License",
+  "licenca_url": "https://ailayoffs.org/license",
+  "licenca_arquivo": "fontes/LICENSE_dataset.txt",
+  "uso_publico": "Redistribuicao e analises permitidas com atribuicao ao AI Layoffs Index e fontes dos eventos; preservar data e versao; nao sugerir endosso ou leitura oficial."
+}

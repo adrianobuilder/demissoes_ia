@@ -1,0 +1,55 @@
+AI Layoffs Index and Register: Data License
+===========================================
+
+The license, verbatim
+----------------------
+Derived from free and open sources; attribute to the AI Layoffs Index and the
+underlying sources.
+
+You are free to
+---------------
+- Read, download, and cache the index, the API responses, and the source-cited
+  register.
+- Quote and cite any figure in research, journalism, reports, and presentations.
+- Redistribute the data and build on it in products, dashboards, and analyses,
+  including commercial ones.
+- Reformat, chart, and derive new figures from it.
+
+You must
+--------
+- Attribute the AI Layoffs Index, by name, wherever you use the data.
+- For a specific underlying event or figure, also credit its linked source
+  (each register row carries one).
+- Keep citations dated and versioned: the index recomputes live, so include the
+  reading, the band, the as-of date, and the methodology version.
+- Do not imply the AI Layoffs Index endorses your use, and do not present derived
+  or altered figures as the official reading.
+
+Why not a Creative Commons license
+----------------------------------
+The index is a derived work built from many sources that carry their own,
+different licenses: some are US government public domain (FRED, Census), some are
+open government or Creative Commons, and some are reproduced from company filings
+and press under their own terms. A single blanket Creative Commons grant over the
+whole would claim rights the project does not hold over those underlying materials.
+So the project uses a plain attribution license over its own work (the index, the
+scoring, the compiled register), and asks you to credit the source for any
+specific underlying figure. That is the honest boundary, and it is why this deposit
+declares custom terms of use rather than a CC waiver.
+
+No warranty
+-----------
+The AI Layoffs Index is a research observatory. Every figure traces to a public
+source and is provided as-is, for information, without warranty of any kind. It
+measures AI's estimated impact on jobs relative to AI's own history since 2023, not
+total unemployment, and it is explicit about its uncertainty. Decisions you make
+from it are your own.
+
+Licensing for organizations
+---------------------------
+The open license above covers the vast majority of uses at no cost. Organizations
+that build on the data can license it under written terms, with custom extracts of
+the register and a note of what changed at each update. See
+https://ailayoffs.org/pricing.
+
+Canonical license page: https://ailayoffs.org/license

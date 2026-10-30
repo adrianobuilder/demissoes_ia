@@ -1,0 +1,15 @@
+.venv/
+.vscode/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.duckdb
+*.duckdb.wal
+relatorio.html
+*.log
+.env
+.env.*
+!.env.example
