@@ -4,17 +4,23 @@ Ler somente SELECT * dos oito marts, em conexão read-only curta e sem fallback
 para objetos Python. Não importar Streamlit nem calcular medidas de negócio.
 Formatar números brasileiros sem locale; ausentes são '—'.
 
-Quatro faixas: sete cartões; mensal em largura inteira; empresa/atribuição/execução;
-família/evidência/concentração. Sete figuras reutilizadas por app.py e relatorio.py.
+Quatro faixas: sete cartões; mensal/atribuição; empresa/execução/evidência;
+família/concentração e tabela de empresas. Sete figuras reutilizadas por app.py e
+relatorio.py, nesta ordem: mensal, atribuição, empresa, execução, evidência,
+família, concentração. Barras mensais/execução, rosca de atribuição, pizza de
+evidência, barras horizontais de empresa/família e curva de concentração.
 O período padrão é o intervalo mensal completo; o filtro do app altera só a figura
 mensal. Os cartões e as outras figuras representam o snapshot inteiro.
 
 Ordenar, filtrar, top 10, traduções de rótulos e formatação são permitidos. Não
 agregar, juntar ou criar indicadores em pandas. Funções de gráficos não alteram
-seus DataFrames. Quantidade desconhecida mantém lacuna, com connectgaps=False.
+seus DataFrames. Quantidade desconhecida mantém lacuna, sem virar barra zero.
+Pizzas usam contagens de categorias exclusivas; percentuais vêm do mart.
+Famílias se sobrepõem e nunca são representadas como partes de uma pizza.
 
-Apresentação modernizada: temas claro/escuro, títulos em linguagem de negócio,
-rótulos traduzidos e alturas menores. A troca de tema não altera valores, filtros
+Composição de terminal financeiro: cabeçalho compacto, indicadores, painéis com
+borda discreta, títulos de seção e tabela de consulta. Temas claro/escuro,
+rótulos traduzidos e cores explícitas. A troca de tema não altera valores, filtros
 ou o conjunto de figuras. O HTML mantém o tema claro por padrão.
 """
 
@@ -42,23 +48,23 @@ MARTS = (
 COR = "#2563EB"
 TEMAS = {
     "claro": {
-        "fundo": "#F2F5FA",
+        "fundo": "#EDF1F5",
         "superficie": "#FFFFFF",
         "superficie_2": "#F7FAFF",
         "texto": "#182B45",
         "secundario": "#52657E",
         "borda": "#DDE5EF",
         "grade": "#E7EDF5",
-        "acento": "#2463D5",
+        "acento": "#235C95",
         "acento_suave": "#EAF1FF",
         "sobre_acento": "#FFFFFF",
         "hero": "#102E57",
-        "sombra": "0 6px 22px rgba(27,55,90,.045)",
+        "sombra": "none",
     },
     "escuro": {
-        "fundo": "#0B1120",
-        "superficie": "#121D2F",
-        "superficie_2": "#18253A",
+        "fundo": "#0C1522",
+        "superficie": "#131F2E",
+        "superficie_2": "#1A2A3D",
         "texto": "#E4ECF8",
         "secundario": "#A4B5CD",
         "borda": "#2A3850",
@@ -129,6 +135,24 @@ TRADUCOES = {
     "Tier 1": "Nível 1 · Fontes primárias",
     "Tier 2": "Nível 2 · Jornalismo",
     "Tier 3": "Nível 3 · Evidência limitada",
+}
+CORES_CATEGORIAS = {
+    "claro": {
+        "mixed": "#267CB8",
+        "blamed": "#8EC8E9",
+        "explicit": "#123E68",
+        "Tier 1": "#123E68",
+        "Tier 2": "#267CB8",
+        "Tier 3": "#8EC8E9",
+    },
+    "escuro": {
+        "mixed": "#56A8E4",
+        "blamed": "#B7DDF4",
+        "explicit": "#2A6BA3",
+        "Tier 1": "#2A6BA3",
+        "Tier 2": "#56A8E4",
+        "Tier 3": "#B7DDF4",
+    },
 }
 
 
@@ -208,25 +232,27 @@ def cartoes(dados) -> list[dict[str, str]]:
     return resultado
 
 
-def _acabamento(fig, titulo, altura=480):
+def _acabamento(fig, titulo, altura=340):
     fig.update_layout(
         template="plotly_white",
-        title={"text": titulo, "x": 0, "xanchor": "left", "font_size": 16},
-        font={"family": "Arial, sans-serif", "size": 12, "color": "#182B45"},
+        title={"text": titulo, "x": 0, "xanchor": "left", "font_size": 12},
+        font={"family": "Segoe UI, Arial, sans-serif", "size": 11, "color": "#182B45"},
         height=altura,
-        margin={"l": 12, "r": 38, "t": 76, "b": 58},
+        margin={"l": 8, "r": 35, "t": 56, "b": 48},
         separators=",.",
         colorway=[COR],
         showlegend=False,
         paper_bgcolor="white",
         plot_bgcolor="white",
+        bargap=0.32,
+        barcornerradius=3,
     )
     fig.update_xaxes(automargin=True, gridcolor="#E8EDF3")
     fig.update_yaxes(automargin=True, gridcolor="#E8EDF3")
     return fig
 
 
-def _vazio(titulo, altura=480):
+def _vazio(titulo, altura=340):
     fig = _acabamento(go.Figure(), titulo, altura)
     fig.add_annotation(
         text="Sem observações para exibir",
@@ -239,9 +265,9 @@ def _vazio(titulo, altura=480):
     return fig
 
 
-def _barras(dados, categoria, valor, titulo, unidade):
+def _barras(dados, categoria, valor, titulo, unidade, altura=355):
     if dados.empty:
-        return _vazio(titulo)
+        return _vazio(titulo, altura)
     rotulos = [
         "<br>".join(textwrap.wrap(escape(TRADUCOES.get(str(v), str(v))), 24))
         for v in dados[categoria]
@@ -264,10 +290,14 @@ def _barras(dados, categoria, valor, titulo, unidade):
             hovertemplate=hover + "<extra></extra>",
         )
     )
-    _acabamento(fig, titulo)
+    _acabamento(fig, titulo, altura)
     fig.update_xaxes(title_text=unidade, rangemode="tozero", tickformat=",.0f")
     fig.update_yaxes(
-        autorange="reversed", title_text=None, categoryorder="array", categoryarray=rotulos
+        autorange="reversed",
+        title_text=None,
+        categoryorder="array",
+        categoryarray=rotulos,
+        showgrid=False,
     )
     return fig
 
@@ -275,23 +305,20 @@ def _barras(dados, categoria, valor, titulo, unidade):
 def cortes_mensais(dados):
     ordenado = dados.sort_values("mes")
     if ordenado.empty:
-        return _vazio("Postos contabilizados por mês", 360)
+        return _vazio("EVOLUÇÃO MENSAL", 310)
     periodo = f"{mes_ano(ordenado.iloc[0]['mes'])} a {mes_ano(ordenado.iloc[-1]['mes'])}"
     fig = go.Figure(
-        go.Scatter(
+        go.Bar(
             x=ordenado["mes"],
             y=ordenado["postos_contabilizados"],
-            mode="lines+markers",
-            line={"color": COR, "width": 2},
-            marker={"size": 6},
-            connectgaps=False,
+            marker_color=COR,
             customdata=ordenado[["eventos_corte", "eventos_quantificados"]].to_numpy(),
             hovertemplate="%{x|%m/%Y}<br>Postos contabilizados: %{y:,.0f}"
             "<br>Eventos de corte: %{customdata[0]}"
             "<br>Eventos quantificados: %{customdata[1]}<extra></extra>",
         )
     )
-    _acabamento(fig, f"Postos contabilizados por mês<br><sup>{periodo}</sup>", 360)
+    _acabamento(fig, f"EVOLUÇÃO MENSAL<br><sup>Postos contabilizados · {periodo}</sup>", 310)
     # Até quatro datas legíveis também na largura de um celular; os dados
     # mensais completos continuam na curva e no hover.
     ultimo = len(ordenado) - 1
@@ -303,8 +330,9 @@ def cortes_mensais(dados):
         tickvals=ticks,
         ticktext=[mes_ano(v).replace("/", "<br>") for v in ticks],
         tickangle=0,
+        showgrid=False,
     )
-    fig.update_yaxes(title_text="Postos contabilizados", rangemode="tozero", tickformat=",.0f")
+    fig.update_yaxes(title_text="Postos", rangemode="tozero", tickformat=",.0f", nticks=5)
     return fig
 
 
@@ -318,31 +346,110 @@ def postos_por_empresa(dados):
         ordenado,
         "empresa",
         "postos_contabilizados",
-        "Empresas com mais postos<br><sup>Dez maiores totais contabilizados</sup>",
+        "EMPRESAS EM DESTAQUE<br><sup>Dez maiores totais conhecidos</sup>",
         "Postos contabilizados",
     )
 
 
 def eventos_por_atribuicao(dados):
     ordenado = dados.sort_values(["eventos_corte", "atribuicao_ia"], ascending=[False, True])
-    return _barras(
-        ordenado,
-        "atribuicao_ia",
-        "eventos_corte",
-        "Atribuição à IA<br><sup>Classificação da fonte</sup>",
-        "Eventos de corte",
-    )
+    return _pizza(ordenado, "atribuicao_ia", "ATRIBUIÇÃO À IA", furo=0.68, altura=390)
 
 
 def eventos_por_execucao(dados):
     ordenado = dados.sort_values(["eventos_corte", "situacao_execucao"], ascending=[False, True])
-    return _barras(
-        ordenado,
-        "situacao_execucao",
-        "eventos_corte",
-        "Situação de execução",
-        "Eventos de corte",
+    if ordenado.empty:
+        return _vazio("EXECUÇÃO DOS CORTES", 355)
+    rotulos = [
+        "<br>".join(textwrap.wrap(TRADUCOES.get(str(v), str(v)), 12))
+        for v in ordenado["situacao_execucao"]
+    ]
+    figura = _acabamento(
+        go.Figure(
+            go.Bar(
+                x=rotulos,
+                y=ordenado["eventos_corte"],
+                text=[numero(v) for v in ordenado["eventos_corte"]],
+                textposition="outside",
+                cliponaxis=False,
+                marker_color=COR,
+                customdata=ordenado[["situacao_execucao", "pct_eventos"]].to_numpy(),
+                hovertemplate="%{x}<br>Eventos de corte: %{y:,.0f}<br>Participação: %{customdata[1]:.1f}%<extra></extra>",
+            )
+        ),
+        "EXECUÇÃO DOS CORTES<br><sup>Situação informada pela fonte</sup>",
+        355,
     )
+    figura.update_xaxes(
+        showgrid=False,
+        tickangle=0,
+        tickmode="array",
+        tickvals=rotulos,
+        ticktext=["Desconh." if v == "Desconhecido" else v for v in rotulos],
+    )
+    figura.update_yaxes(title_text="Eventos", rangemode="tozero", nticks=5, tickformat=",.0f")
+    return figura
+
+
+def _pizza(dados, categoria, titulo, furo=0, altura=355):
+    if dados.empty or dados.loc[dados["eventos_corte"] > 0].empty:
+        return _vazio(titulo, altura)
+    rotulos = [
+        "<br>".join(textwrap.wrap(TRADUCOES.get(str(v), str(v)), 27)) for v in dados[categoria]
+    ]
+    figura = _acabamento(
+        go.Figure(
+            go.Pie(
+                labels=rotulos,
+                values=dados["eventos_corte"],
+                hole=furo,
+                sort=False,
+                direction="clockwise",
+                rotation=20,
+                text=[pct(v) for v in dados["pct_eventos"]],
+                textinfo="text",
+                textposition="inside",
+                insidetextorientation="horizontal",
+                textfont={"size": 12, "color": "#FFFFFF"},
+                customdata=dados[[categoria, "eventos_corte", "pct_eventos"]].to_numpy(),
+                marker={
+                    "colors": [
+                        CORES_CATEGORIAS["claro"].get(str(v), "#718096") for v in dados[categoria]
+                    ],
+                    "line": {"color": "#FFFFFF", "width": 2},
+                },
+                hovertemplate="%{label}<br>Eventos de corte: %{value:,.0f}<br>Participação: %{customdata[2]:.1f}%<extra></extra>",
+            )
+        ),
+        titulo + "<br><sup>Participação nos eventos de corte</sup>",
+        altura,
+    )
+    figura.update_layout(
+        showlegend=True,
+        margin={"l": 8, "r": 8, "t": 60, "b": 100},
+        legend={
+            "orientation": "h",
+            "x": 0,
+            "y": -0.1,
+            "xanchor": "left",
+            "yanchor": "top",
+            "entrywidth": 1,
+            "entrywidthmode": "fraction",
+            "font_size": 11,
+        },
+        uniformtext={"minsize": 11, "mode": "hide"},
+    )
+    if furo:
+        figura.add_annotation(
+            text="ASSOCIAÇÃO<br>À IA",
+            x=0.5,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+            showarrow=False,
+            font={"size": 12},
+        )
+    return figura
 
 
 def eventos_por_familia(dados):
@@ -351,33 +458,33 @@ def eventos_por_familia(dados):
         ordenado,
         "familia_ocupacional",
         "eventos_corte",
-        "Famílias ocupacionais<br><sup>Um evento pode pertencer a várias famílias</sup>",
+        "FAMÍLIAS OCUPACIONAIS<br><sup>Contagens sobrepostas · não somar</sup>",
         "Eventos distintos de corte",
+        altura=455,
     )
-    return figura.update_layout(height=600)
+    return figura
 
 
 def eventos_por_evidencia(dados):
-    figura = _barras(
+    return _pizza(
         dados.sort_values("nivel_evidencia"),
         "nivel_evidencia",
-        "eventos_corte",
-        "Qualidade das evidências<br><sup>Classificação informada pela fonte</sup>",
-        "Eventos de corte",
+        "QUALIDADE DAS EVIDÊNCIAS",
     )
-    return figura.update_layout(height=600)
 
 
 def concentracao_empresas(dados):
     ordenado = dados.sort_values("posicao")
     if ordenado.loc[ordenado["pct_acumulado"].notna()].empty:
-        return _vazio("Concentração por empresa", 600)
+        return _vazio("CONCENTRAÇÃO POR EMPRESA", 265)
     fig = go.Figure(
         go.Scatter(
             x=ordenado["posicao"],
             y=ordenado["pct_acumulado"],
             mode="lines",
             line={"color": COR, "width": 2},
+            fill="tozeroy",
+            fillcolor="rgba(38,124,184,0.10)",
             customdata=ordenado[["empresa", "postos_contabilizados"]].to_numpy(),
             hovertemplate="%{customdata[0]}<br>Posição: %{x}"
             "<br>Postos contabilizados: %{customdata[1]:,.0f}"
@@ -385,12 +492,35 @@ def concentracao_empresas(dados):
         )
     )
     _acabamento(
-        fig, "Concentração por empresa<br><sup>Acumulado dos postos contabilizados</sup>", 600
+        fig,
+        "CONCENTRAÇÃO POR EMPRESA<br><sup>Participação acumulada nos postos conhecidos</sup>",
+        265,
     )
     fig.add_hline(y=80, line_dash="dash", line_color="#64748B")
-    fig.update_xaxes(title_text="Posição da empresa", rangemode="tozero", tickformat=",.0f")
-    fig.update_yaxes(title_text="Participação acumulada (%)", range=[0, 105])
+    fig.update_xaxes(
+        title_text="Posição no ranking", rangemode="tozero", tickformat=",.0f", showgrid=False
+    )
+    fig.update_yaxes(title_text="Acumulado (%)", range=[0, 105], ticksuffix="%", nticks=5)
     return fig
+
+
+def tabela_empresas(dados):
+    """Cinco linhas para consulta; só ordena e formata o mart já agregado."""
+    empresas = (
+        dados.loc[dados["postos_contabilizados"].notna()]
+        .sort_values(["postos_contabilizados", "empresa"], ascending=[False, True])
+        .head(5)
+    )
+    linhas = "".join(
+        f"<tr><td>{escape(str(linha.empresa))}</td><td>{numero(linha.eventos_corte)}</td>"
+        f"<td>{numero(linha.postos_contabilizados)}</td></tr>"
+        for linha in empresas.itertuples(index=False)
+    )
+    return (
+        '<div class="company-table"><h3>QUADRO DE EMPRESAS <span>Top 5 · postos conhecidos</span></h3>'
+        "<table><thead><tr><th>Empresa</th><th>Cortes</th><th>Postos</th></tr></thead>"
+        f"<tbody>{linhas}</tbody></table></div>"
+    )
 
 
 def aplicar_tema(figura, tema="claro"):
@@ -418,13 +548,28 @@ def aplicar_tema(figura, tema="claro"):
         tickfont_color=cores["secundario"],
         title_font_color=cores["secundario"],
     )
-    figura.update_traces(marker_color=cores["acento"], width=0.58, selector={"type": "bar"})
+    figura.update_traces(marker_color=cores["acento"], selector={"type": "bar"})
     figura.update_traces(
         line_color=cores["acento"],
         marker_color=cores["acento"],
         line_width=2.5,
         selector={"type": "scatter"},
     )
+    for serie in figura.data:
+        if serie.type == "pie":
+            serie.marker.colors = [
+                CORES_CATEGORIAS[tema].get(str(v[0]), cores["secundario"]) for v in serie.customdata
+            ]
+            serie.marker.line.color = cores["superficie"]
+            # Percentuais permanecem legíveis nas três tonalidades da paleta.
+            serie.textfont.color = [
+                "#102E47"
+                if str(v[0]) in ("blamed", "Tier 3")
+                or (tema == "escuro" and str(v[0]) in ("mixed", "Tier 2"))
+                else "#FFFFFF"
+                for v in serie.customdata
+            ]
+    figura.update_layout(legend_font_color=cores["secundario"])
     for forma in figura.layout.shapes:
         forma.line.color = cores["secundario"]
     for anotacao in figura.layout.annotations:
@@ -436,11 +581,11 @@ def figuras(dados, tema="claro"):
     paleta(tema)
     prontas = [
         cortes_mensais(dados["cortes_mensais"]),
-        postos_por_empresa(dados["empresas"]),
         eventos_por_atribuicao(dados["atribuicao_ia"]),
+        postos_por_empresa(dados["empresas"]),
         eventos_por_execucao(dados["execucao_cortes"]),
-        eventos_por_familia(dados["familias_ocupacionais"]),
         eventos_por_evidencia(dados["evidencias"]),
+        eventos_por_familia(dados["familias_ocupacionais"]),
         concentracao_empresas(dados["concentracao_empresas"]),
     ]
     return [aplicar_tema(figura, tema) for figura in prontas]

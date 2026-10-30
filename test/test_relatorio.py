@@ -57,11 +57,11 @@ def test_reutiliza_as_sete_funcoes_de_painel(monkeypatch):
     chamadas = []
     nomes = [
         "cortes_mensais",
-        "postos_por_empresa",
         "eventos_por_atribuicao",
+        "postos_por_empresa",
         "eventos_por_execucao",
-        "eventos_por_familia",
         "eventos_por_evidencia",
+        "eventos_por_familia",
         "concentracao_empresas",
     ]
 

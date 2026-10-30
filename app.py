@@ -1,9 +1,8 @@
-"""Dashboard Streamlit; a spec de apresentação está em painel.py e design/visual.md.
+"""Painel de composição financeira; spec em painel.py e design/visual.md.
 
-Sete cartões e sete figuras em quatro faixas, nos temas claro e escuro. O tema
-persiste na sessão e altera só a aparência. Cachear dados, sem conexão aberta.
-Período padrão completo; filtro apenas no mensal. Recarga limpa o cache; falha de
-leitura mostra orientação e interrompe. Executar: uv run streamlit run app.py.
+Sete cartões e figuras compartilhadas, tabela do mart de empresas e quatro
+faixas. Temas claro/escuro, cache sem conexão aberta e filtro só mensal.
+Executar: uv run streamlit run app.py.
 """
 
 from datetime import date
@@ -15,7 +14,7 @@ import streamlit as st
 
 import painel
 
-st.set_page_config(page_title="Demissões associadas à IA", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Registro de demissões · IA", page_icon="📊", layout="wide")
 
 
 @st.cache_data(show_spinner=False)
@@ -23,22 +22,30 @@ def carregar():
     return painel.ler(), painel.proveniencia()
 
 
-def secao(titulo, descricao, detalhe=""):
-    st.html(
-        '<div class="section-heading"><div>'
-        f"<h2>{escape(titulo)}</h2><p>{escape(descricao)}</p></div>"
-        f'<span class="section-hint">{escape(detalhe)}</span></div>'
+def grafico(indice):
+    st.plotly_chart(
+        figuras[indice],
+        width="stretch",
+        key=f"g{indice + 1:02}",
+        theme=None,
+        config={"displaylogo": False, "displayModeBar": False},
     )
 
 
-with st.container(key="barra_superior"):
-    marca, aparencia, recarga = st.columns([3.5, 1.5, 1.2], vertical_alignment="center")
+def divisao(numero, titulo, detalhe, ancora):
+    st.html(
+        f'<div class="section-rule" id="{ancora}"><h2><span>{numero}</span> '
+        f"{escape(titulo)}</h2><p>{escape(detalhe)}</p></div>"
+    )
+
+
+with st.container(key="topbar"):
+    marca, aparencia, recarga = st.columns([4.8, 1.6, 1.1], vertical_alignment="center")
     with marca:
-        st.html(
-            '<div class="app-brand"><span class="marca" aria-hidden="true">IA</span>'
-            "<div><strong>TRABALHO &amp; TECNOLOGIA</strong>"
-            "<small>Registro de eventos e evidências</small></div></div>"
-        )
+        st.html("""<div class="masthead"><span class="brand-mark">IA</span>
+<div class="brand-name">TRABALHO &amp; TECNOLOGIA<small>DATA INTELLIGENCE / REGISTRO DE DEMISSÕES</small></div>
+<nav aria-label="Seções do painel"><a href="#evolucao">PANORAMA</a>
+<a href="#distribuicao">DISTRIBUIÇÃO</a><a href="#ocupacoes">OCUPAÇÕES</a></nav></div>""")
     with aparencia, st.container(key="alternar_tema"):
         escolhido = st.segmented_control(
             "Aparência",
@@ -51,7 +58,12 @@ with st.container(key="barra_superior"):
             format_func=lambda valor: f"☀ {valor}" if valor == "Claro" else f"☾ {valor}",
         )
     with recarga:
-        if st.button("Atualizar dados", icon=":material/refresh:", width="stretch"):
+        if st.button(
+            "Atualizar",
+            icon=":material/refresh:",
+            width="stretch",
+            help="Reler os marts; não baixa outra versão da fonte.",
+        ):
             carregar.clear()
 
 tema = "escuro" if escolhido == "Escuro" else "claro"
@@ -67,128 +79,118 @@ except (OSError, ValueError, KeyError, duckdb.Error) as exc:
     )
     st.stop()
 
-st.html(f"""
-<div class="hero">
-  <div>
-    <div class="eyebrow">PANORAMA DOS REGISTROS</div>
-    <h1>Demissões associadas à IA</h1>
-    <p>Explore os eventos de corte, as empresas envolvidas e as evidências disponíveis.
-    Uma visão organizada do registro, com contexto para interpretar cada número.</p>
-  </div>
-  <div class="hero-meta">
-    <span>Snapshot da fonte</span><strong>{snapshot}</strong>
-    <span class="selo">Metodologia v{escape(str(fonte["metodologia"]))}</span>
-  </div>
-</div>
-""")
+st.html(f"""<div class="page-heading" id="panorama"><div>
+<p class="breadcrumb">OBSERVATÓRIO / INTELIGÊNCIA ARTIFICIAL</p>
+<h1>Registro de demissões associadas à IA</h1>
+<p>Eventos de corte, quantidades conhecidas e evidências da associação à inteligência artificial.</p>
+</div><div class="snapshot"><span>SNAPSHOT DA FONTE</span><strong>{snapshot}</strong>
+<small>Metodologia v{escape(str(fonte["metodologia"]))}</small></div></div>""")
 
-secao(
-    "Visão geral",
-    "Os principais números do registro",
-    "Todos os indicadores usam o snapshot inteiro",
-)
-icones = (
-    ":material/event_note:",
-    ":material/domain:",
-    ":material/badge:",
-    ":material/filter_alt_off:",
-    ":material/fact_check:",
-    ":material/equalizer:",
-    ":material/chat_bubble_outline:",
-)
-with st.container(key="cartoes"):
-    for coluna, cartao, icone in zip(st.columns(7), cartoes, icones, strict=True):
-        coluna.metric(
-            cartao["titulo"], cartao["valor"], help=cartao["ajuda"], icon=icone, border=True
+with st.container(key="indicadores"):
+    with st.container(key="kpis_principais"):
+        icones = (
+            ":material/event_note:",
+            ":material/domain:",
+            ":material/badge:",
+            ":material/filter_alt_off:",
         )
+        for coluna, cartao, icone in zip(st.columns(4), cartoes[:4], icones, strict=True):
+            coluna.metric(cartao["titulo"], cartao["valor"], help=cartao["ajuda"], icon=icone)
+    with st.container(key="kpis_complementares"):
+        for coluna, cartao in zip(st.columns(3), cartoes[4:], strict=True):
+            coluna.metric(cartao["titulo"], cartao["valor"], help=cartao["ajuda"])
 
-st.html("""
-<div class="aviso" role="note"><span class="simbolo" aria-hidden="true">ⓘ</span><div>
-<b>Contexto importa.</b> Associação à IA não comprova causalidade. Postos contabilizados podem
-estar anunciados ou parcialmente executados. Quantidade desconhecida não significa zero.
-</div></div>
-""")
-
-secao(
-    "Evolução dos registros",
-    "Acompanhe os postos contabilizados ao longo do tempo",
-    "O filtro abaixo altera somente este gráfico",
-)
+divisao("01", "PANORAMA DOS CORTES", "Evolução e composição do registro", "evolucao")
 mensal = dados["cortes_mensais"]
 meses = [pd.Timestamp(mes).date() for mes in mensal["mes"].sort_values()]
 if not meses:
     st.error("O mart mensal está vazio. Reconstrua os indicadores.")
     st.stop()
-with st.container(key="evolucao"):
-    with st.container(key="filtro_periodo"):
-        if len(meses) > 1:
-            inicio, fim = st.select_slider(
-                "Período do gráfico mensal",
-                options=meses,
-                value=(meses[0], meses[-1]),
-                format_func=painel.mes_ano,
-            )
-        else:
-            inicio = fim = meses[0]
-            st.caption(f"Período mensal: {painel.mes_ano(inicio)}")
-    recorte = mensal.loc[
-        (mensal["mes"] >= pd.Timestamp(inicio)) & (mensal["mes"] <= pd.Timestamp(fim))
-    ]
-    figuras = painel.figuras({**dados, "cortes_mensais": recorte}, tema=tema)
-    st.plotly_chart(
-        figuras[0], width="stretch", key="g01", theme=None, config={"displaylogo": False}
-    )
 
-with st.container(key="graficos"):
-    secao(
-        "Distribuição dos cortes",
-        "Empresas, atribuição à IA e situação de execução",
-        "Snapshot completo",
-    )
-    for coluna, indice in zip(st.columns(3), (1, 2, 3), strict=True):
-        with coluna, st.container(key=f"quadro_{indice}"):
-            st.plotly_chart(
-                figuras[indice],
-                width="stretch",
-                key=f"g{indice + 1:02}",
-                theme=None,
-                config={"displaylogo": False},
-            )
-    secao(
-        "Evidências e concentração",
-        "Os tipos de trabalho, as fontes e a distribuição dos postos",
-        "Famílias ocupacionais se sobrepõem",
-    )
-    for coluna, indice in zip(st.columns(3), (4, 5, 6), strict=True):
-        with coluna, st.container(key=f"quadro_{indice}"):
-            st.plotly_chart(
-                figuras[indice],
-                width="stretch",
-                key=f"g{indice + 1:02}",
-                theme=None,
-                config={"displaylogo": False},
-            )
+with st.container(key="faixa_panorama"):
+    evolucao, atribuicao = st.columns([2, 1])
+    with evolucao, st.container(key="painel_mensal"):
+        with st.container(key="filtro_periodo"):
+            if len(meses) > 1:
+                inicio, fim = st.select_slider(
+                    "Período · filtra somente a evolução mensal",
+                    options=meses,
+                    value=(meses[0], meses[-1]),
+                    format_func=painel.mes_ano,
+                )
+            else:
+                inicio = fim = meses[0]
+                st.caption(f"Período mensal: {painel.mes_ano(inicio)}")
+        recorte = mensal.loc[
+            (mensal["mes"] >= pd.Timestamp(inicio)) & (mensal["mes"] <= pd.Timestamp(fim))
+        ]
+        figuras = painel.figuras({**dados, "cortes_mensais": recorte}, tema=tema)
+        grafico(0)
+        st.html(
+            '<p class="panel-note">Mês sem quantidade conhecida fica sem barra. O hover informa cada mês.</p>'
+        )
+    with atribuicao, st.container(key="painel_atribuicao"):
+        grafico(1)
+        st.html(
+            '<p class="panel-note">Associação à IA não comprova causalidade. Cada corte pertence a uma classificação.</p>'
+        )
 
-with st.expander("Como ler este painel", icon=":material/info:"):
+divisao(
+    "02",
+    "DISTRIBUIÇÃO E EVIDÊNCIAS",
+    "Snapshot completo · independe do filtro mensal",
+    "distribuicao",
+)
+with st.container(key="faixa_distribuicao"):
+    for coluna, indice, chave in zip(
+        st.columns(3), (2, 3, 4), ("empresas", "execucao", "evidencias"), strict=True
+    ):
+        with coluna, st.container(key=f"painel_{chave}"):
+            grafico(indice)
+            notas = {
+                "empresas": "Somente empresas com quantidade contabilizada conhecida.",
+                "execucao": "Postos contabilizados podem estar anunciados ou parcialmente executados.",
+                "evidencias": "Percentuais arredondados. Nível de evidência difere da atribuição à IA.",
+            }
+            st.html(f'<p class="panel-note">{notas[chave]}</p>')
+
+divisao(
+    "03",
+    "OCUPAÇÕES E CONCENTRAÇÃO",
+    "Famílias sobrepostas e distribuição dos postos conhecidos",
+    "ocupacoes",
+)
+with st.container(key="faixa_ocupacoes"):
+    familias, concentracao = st.columns([1.25, 1])
+    with familias, st.container(key="painel_familias"):
+        grafico(5)
+        st.html(
+            '<p class="panel-note">Um evento pode citar várias famílias ocupacionais. As contagens não são aditivas.</p>'
+        )
+    with concentracao:
+        with st.container(key="painel_concentracao"):
+            grafico(6)
+        with st.container(key="painel_tabela"):
+            st.html(painel.tabela_empresas(dados["empresas"]))
+
+with st.expander("Metodologia e como interpretar os indicadores", icon=":material/info:"):
     st.markdown("""
-- **Postos contabilizados:** quantidades aceitas pela metodologia da fonte, incluindo anúncios e execução parcial.
-- **Postos não contados:** quantidades reportadas em cortes, mas excluídas pela fonte. Não adicionar ao total contabilizado.
-- **Cortes quantificados:** parcela dos eventos de corte que tem quantidade contabilizada conhecida.
-- **Atribuição à IA:** distingue a declaração do empregador, a IA entre vários fatores e a associação por outras fontes.
-- **Níveis de evidência:** fontes primárias, jornalismo identificado ou evidência limitada. Não equivalem a graus de causalidade.
-- **Famílias ocupacionais:** um evento pode aparecer em várias. Suas contagens não devem ser somadas.
-- **Declarações sem corte:** não fazem parte da população de eventos de corte.
+- **Postos contabilizados:** aceitos pela metodologia da fonte, incluindo anúncios e execução parcial.
+- **Postos não contados:** reportados em cortes, mas excluídos pela fonte. Não adicionar ao total contabilizado.
+- **Cortes quantificados:** parcela dos cortes com quantidade conhecida; desconhecido não é zero.
+- **Mediana:** somente eventos de corte com quantidade conhecida.
+- **Atribuição à IA:** empregador cita IA, IA entre vários fatores ou associação por outras fontes.
+- **Evidências:** fontes primárias, jornalismo identificado ou evidência limitada; não são graus de causalidade.
+- **Famílias ocupacionais:** um evento pode aparecer em várias; suas contagens não devem ser somadas.
+- **Declarações sem corte:** fora da população de eventos de corte.
 
-Os cartões e seis gráficos de comparação usam o snapshot completo. Apenas a evolução mensal responde ao filtro.
-`Atualizar dados` relê os indicadores materializados; não baixa uma nova versão do dataset.
+Cartões e seis gráficos de comparação usam o snapshot completo. Só a evolução mensal responde ao filtro.
+`Atualizar` relê os indicadores materializados, sem baixar outra versão do dataset.
 """)
 
-st.html(f"""
-<div class="rodape">
-  <div>Fonte: <a href="https://ailayoffs.org" target="_blank" rel="noopener noreferrer"><strong>AI Layoffs Index</strong></a>
-  · {snapshot} · metodologia v{escape(str(fonte["metodologia"]))}<br>
-  Análise independente. Não representa a leitura oficial do índice nem endosso do publicador.</div>
-  <div><a href="https://github.com/adrianobuilder/demissoes_ia/blob/main/raw/ai-layoffs-register.csv"
-  target="_blank" rel="noopener noreferrer">Consultar o registro e as fontes dos eventos ↗</a></div>
-</div>
-""")
+st.html(f"""<footer class="rodape"><div><strong>FONTE / </strong>
+<a href="https://ailayoffs.org" target="_blank" rel="noopener noreferrer">AI Layoffs Index</a>
+· {snapshot} · metodologia v{escape(str(fonte["metodologia"]))}<br>
+Análise independente, sem endosso do publicador. Associação não comprova causalidade.</div>
+<a href="https://github.com/adrianobuilder/demissoes_ia/blob/main/raw/ai-layoffs-register.csv"
+target="_blank" rel="noopener noreferrer">Registro e fontes dos eventos ↗</a></footer>""")

@@ -35,7 +35,13 @@ def dados_sinteticos():
                 "postos_contabilizados": [20, 10, None],
             }
         ),
-        "empresas": pd.DataFrame({"empresa": ["Alfa", "Beta"], "postos_contabilizados": [10, 20]}),
+        "empresas": pd.DataFrame(
+            {
+                "empresa": ["Alfa", "Beta"],
+                "postos_contabilizados": [10, 20],
+                "eventos_corte": [1, 2],
+            }
+        ),
         "atribuicao_ia": pd.DataFrame(
             {
                 "atribuicao_ia": ["mixed", "blamed"],
@@ -138,11 +144,20 @@ def test_sete_figuras_preservam_dados_e_usam_valores_recebidos():
     antes = {nome: df.copy(deep=True) for nome, df in dados.items()}
     figuras = painel.figuras(dados)
     assert len(figuras) == 7
-    assert list(figuras[1].data[0].x) == [20, 10]
-    assert list(figuras[2].data[0].x) == [2, 1]
-    assert list(figuras[3].data[0].x) == [2, 1]
-    assert list(figuras[4].data[0].y) == ["Engenharia", "Operações"]
-    assert [rotulo.replace("<br>", " ") for rotulo in figuras[5].data[0].y] == [
+    assert [f.data[0].type for f in figuras] == [
+        "bar",
+        "pie",
+        "bar",
+        "bar",
+        "pie",
+        "bar",
+        "scatter",
+    ]
+    assert list(figuras[1].data[0].values) == [2, 1]
+    assert list(figuras[2].data[0].x) == [20, 10]
+    assert list(figuras[3].data[0].y) == [2, 1]
+    assert list(figuras[5].data[0].y) == ["Engenharia", "Operações"]
+    assert [rotulo.replace("<br>", " ") for rotulo in figuras[4].data[0].labels] == [
         "Nível 1 · Fontes primárias",
         "Nível 2 · Jornalismo",
     ]
@@ -159,7 +174,7 @@ def test_mensal_ordenacao_periodo_e_lacuna():
     figura = painel.cortes_mensais(dados_sinteticos()["cortes_mensais"])
     assert list(figura.data[0].x) == [date(2024, 1, 1), date(2024, 2, 1), date(2024, 3, 1)]
     assert pd.isna(figura.data[0].y[1])
-    assert figura.data[0].connectgaps is False
+    assert figura.data[0].type == "bar"
     assert "jan/2024 a mar/2024" in figura.layout.title.text
     assert list(figura.layout.xaxis.ticktext) == ["jan<br>2024", "mar<br>2024"]
 
@@ -215,9 +230,20 @@ def test_temas_preservam_valores_e_lacunas():
         assert figura_clara.layout.paper_bgcolor == painel.TEMAS["claro"]["superficie"]
         assert figura_escura.layout.paper_bgcolor == painel.TEMAS["escuro"]["superficie"]
         for serie_clara, serie_escura in zip(figura_clara.data, figura_escura.data, strict=True):
-            pd.testing.assert_series_equal(pd.Series(serie_clara.x), pd.Series(serie_escura.x))
-            pd.testing.assert_series_equal(pd.Series(serie_clara.y), pd.Series(serie_escura.y))
-    assert escuro[0].data[0].connectgaps is False
+            campos = (
+                ("labels", "values", "customdata", "text")
+                if serie_clara.type == "pie"
+                else ("x", "y")
+            )
+            for campo in campos:
+                if campo == "customdata":
+                    assert serie_clara.customdata.tolist() == serie_escura.customdata.tolist()
+                else:
+                    pd.testing.assert_series_equal(
+                        pd.Series(getattr(serie_clara, campo)),
+                        pd.Series(getattr(serie_escura, campo)),
+                    )
+    assert pd.isna(escuro[0].data[0].y[1])
     assert escuro[6].layout.shapes[0].y0 == 80
 
 
@@ -225,3 +251,34 @@ def test_tema_invalido_tem_erro_claro():
     with pytest.raises(ValueError, match="Tema inválido"):
         painel.figuras(dados_sinteticos(), tema="inexistente")
     assert set(painel.TEMAS) == {"claro", "escuro"}
+
+
+def test_pizzas_usam_populacao_exclusiva_e_percentuais_do_mart():
+    dados = dados_sinteticos()
+    dados["atribuicao_ia"].loc[0, "pct_eventos"] = 61.2
+    figura = painel.eventos_por_atribuicao(dados["atribuicao_ia"])
+    assert figura.data[0].hole == 0.68
+    assert list(figura.data[0].values) == [2, 1]
+    assert list(figura.data[0].text) == ["61,2%", "33,3%"]
+    assert list(figura.data[0].customdata[:, 0]) == ["mixed", "blamed"]
+    assert painel.eventos_por_familia(dados["familias_ocupacionais"]).data[0].type == "bar"
+    zeros = dados["evidencias"].assign(eventos_corte=0)
+    assert not painel.eventos_por_evidencia(zeros).data
+
+
+def test_tabela_formata_top_cinco_sem_agregar_e_escapa_texto():
+    dados = pd.DataFrame(
+        {
+            "empresa": [f"E{i}" for i in range(7)],
+            "eventos_corte": [1] * 7,
+            "postos_contabilizados": range(7),
+        }
+    )
+    dados.loc[6, "empresa"] = "<script>"
+    antes = dados.copy(deep=True)
+    html = painel.tabela_empresas(dados)
+    assert html.count("<tr>") == 6  # cabeçalho e cinco empresas
+    assert "&lt;script&gt;" in html and "<script>" not in html
+    assert "E0" not in html and "E1" not in html
+    assert "<td>1</td><td>6</td>" in html
+    pd.testing.assert_frame_equal(dados, antes)
