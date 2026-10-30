@@ -48,7 +48,7 @@ CARTOES = (
     ),
     (
         "postos_reportados_nao_contabilizados",
-        "Postos não contabilizados",
+        "Postos não contados",
         "numero",
         "Reportados em cortes, mas excluídos da contagem da fonte. Não somar ao cartão anterior.",
     ),
@@ -235,7 +235,11 @@ def cortes_mensais(dados):
     if ticks[-1] != ordenado.iloc[-1]["mes"]:
         ticks.append(ordenado.iloc[-1]["mes"])
     fig.update_xaxes(
-        title_text=None, tickmode="array", tickvals=ticks, ticktext=[mes_ano(v) for v in ticks]
+        title_text=None,
+        tickmode="array",
+        tickvals=ticks,
+        ticktext=[mes_ano(v).replace("/", "<br>") for v in ticks],
+        tickangle=0,
     )
     fig.update_yaxes(title_text="Postos contabilizados", rangemode="tozero", tickformat=",.0f")
     return fig

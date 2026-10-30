@@ -32,7 +32,8 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 - **D — transformação:** seis novos testes aprovados, incluindo conflito, conversões, vazio e rollback tardio. Cópia real: 320 eventos e 498 associações, com zero órfãos; quantidades ausentes preservadas.
 - **E — indicadores SQL:** oito marts e seis novos testes aprovados. Cópia real: 402 linhas materializadas; o JOIN de cortes tem 475 associações para 302 IDs distintos. Totais mensal e por empresa reconciliam em 83.847 postos contabilizados.
 - **F1 — biblioteca de apresentação:** `painel.py` entregue com sete cartões, sete figuras e 11 testes aprovados. Sem Streamlit ou agregações de negócio; leitura read-only curta e figuras sem mutação dos dados.
-- **F2/F3 e G — app, HTML e validação final:** pendentes.
+- **F2 — app:** sete cartões/figuras, cache, recarga e filtro mensal verificados com Streamlit AppTest. Disposição conferida no Chrome em largura normal e 768 px; cartões e gráficos se reorganizam na tela menor.
+- **F3 e G — HTML e validação final:** pendentes.
 
 ## Preparar o ambiente
 
@@ -84,11 +85,21 @@ uv run pytest test/test_marts.py
 
 Na cópia real, os cartões retornam 302 cortes, 250 empresas, 83.847 postos contabilizados, 278.169 reportados não contabilizados nos cortes, 30,8% de cobertura, mediana 314 e 18 declarações. Esses valores são diagnóstico do snapshot, não expectativas da suíte unitária.
 
+## Dashboard
+
+```powershell
+uv run streamlit run app.py
+```
+
+Abrir o endereço mostrado pelo Streamlit. O filtro altera apenas o gráfico mensal; cartões e comparações mantêm o snapshot completo. `Recarregar dados` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados.
+
 ## Limites de interpretação
 
 Eventos de corte e declarações sem corte são populações diferentes. Postos contabilizados e postos reportados não contabilizados não serão somados. Ausência de quantidade não equivale a zero. Associação à IA não comprova causalidade; postos contabilizados também podem pertencer a anúncios ou execução parcial.
 
 ## Uso da IA: conferências e correções
+
+Na apresentação, os testes funcionais não detectaram truncamento dos cartões numa tela de 768 px. A conferência no Chrome revelou o problema; a grade passou a reorganizar os cartões e empilhar os gráficos nessa largura, preservando as medidas e as quatro faixas lógicas. A verificação visual complementa os testes, sem ser substituída pela cobertura.
 
 Na primeira execução da etapa C, 4 de 12 testes falharam: o código gerado usou `fetchone()` na contagem e tentou desregistrar o DataFrame com um resultado ainda pendente no DuckDB 2.0. A exceção `ResourceInUseException` mostrou a suposição incorreta de compatibilidade com a versão anterior. A correção passou a consumir todo o resultado com `fetchall()` antes de `unregister`; os 12 testes passaram na repetição, incluindo gravação, reexecução, entrada vazia e rollback. A [documentação da API Python](https://www.duckdb.org/docs/lts/clients/python/dbapi) também descreve a necessidade de concluir o resultado antes de outra operação na conexão.
 

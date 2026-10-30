@@ -158,7 +158,7 @@ def test_mensal_ordenacao_periodo_e_lacuna():
     assert pd.isna(figura.data[0].y[1])
     assert figura.data[0].connectgaps is False
     assert "jan/2024 a mar/2024" in figura.layout.title.text
-    assert list(figura.layout.xaxis.ticktext) == ["jan/2024", "mar/2024"]
+    assert list(figura.layout.xaxis.ticktext) == ["jan<br>2024", "mar<br>2024"]
 
 
 def test_empresa_top_dez_desempate_e_nulos():
