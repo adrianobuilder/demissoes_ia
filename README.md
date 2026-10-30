@@ -28,7 +28,8 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 
 - **A — fonte e pergunta:** cópia preservada, licença conferida e perfil registrado. Há 320 eventos e 498 pares evento–família, cobrindo os mesmos 320 IDs sem órfãos na derivação diagnóstica. Esses valores não são expectativas dos testes unitários.
 - **B — ambiente:** Python 3.14.3, DuckDB 2.0.0, pandas 3.1.0, Streamlit 1.66.1 e Plotly 7.1.0 disponíveis. pytest-cov acrescentado; coleta em `test/`, cobertura total mínima de 60% e Ruff configurados.
-- **C a G — pipeline, SQLs, apresentação e validação:** pendentes. Os contratos estão no guia; os comandos de reprodução serão incluídos à medida que os módulos forem verificados.
+- **C — infraestrutura e ingestão:** 12 testes sintéticos aprovados; carga real conferida com 320 linhas em `raw.eventos`.
+- **D a G — transformação, SQLs, apresentação e validação:** pendentes.
 
 ## Preparar o ambiente
 
@@ -42,11 +43,20 @@ uv sync --locked
 
 O nome da pasta clonada pode diferir de `demissao_ia`; os caminhos de produção serão baseados na localização dos módulos. Os arquivos de entrada estão versionados. `.gitattributes` preserva os bytes do CSV e dos documentos originais, inclusive no Windows.
 
+Após preparar o ambiente, a etapa de ingestão já pode ser reproduzida:
+
+```powershell
+uv run python -m pipeline.ingestao
+uv run pytest test/test_db.py test/test_ingestao.py
+```
+
 ## Limites de interpretação
 
 Eventos de corte e declarações sem corte são populações diferentes. Postos contabilizados e postos reportados não contabilizados não serão somados. Ausência de quantidade não equivale a zero. Associação à IA não comprova causalidade; postos contabilizados também podem pertencer a anúncios ou execução parcial.
 
 ## Uso da IA: conferências e correções
+
+Na primeira execução da etapa C, 4 de 12 testes falharam: o código gerado usou `fetchone()` na contagem e tentou desregistrar o DataFrame com um resultado ainda pendente no DuckDB 2.0. A exceção `ResourceInUseException` mostrou a suposição incorreta de compatibilidade com a versão anterior. A correção passou a consumir todo o resultado com `fetchall()` antes de `unregister`; os 12 testes passaram na repetição, incluindo gravação, reexecução, entrada vazia e rollback. A [documentação da API Python](https://www.duckdb.org/docs/lts/clients/python/dbapi) também descreve a necessidade de concluir o resultado antes de outra operação na conexão.
 
 Na preparação do guia, o total reportado exigiu revisão da população: todas as linhas somam 285.969, mas uma declaração sem corte contém 7.800. A conferência por tipo de evento determinou 278.169 para o indicador restrito aos cortes. O diagnóstico ficou registrado em `fontes/perfil_fonte.json`; os testes usarão exemplos inventados para verificar essa separação.
 
