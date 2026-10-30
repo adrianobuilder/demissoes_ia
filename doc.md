@@ -16,7 +16,7 @@ Há três estados de informação ao longo do documento:
 - **Estrutura prevista:** contrato e organização a implementar no novo projeto.
 - **Opcional:** ferramenta ou extensão que só entra se houver necessidade.
 
-As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo. Após a modernização visual, são 44 testes e 97,97%, além de AppTest e conferência no Chrome em 1310 e 390 px. O [README](README.md), o [registro original](fontes/validacao_entrega.json) e a [validação visual](fontes/validacao_visual.json) distinguem provas e limitações. A abertura visual do HTML local com dois cliques permanece pendente, pois o navegador da ferramenta bloqueia o protocolo `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
+As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo; a modernização H teve 44 testes e 97,97%. A revisão visual 2 tem 46 testes e 97,62%, AppTest e Chrome em 1310 e 390 px, mudando a composição e os tipos de gráficos conforme a referência. O [README](README.md), os [registros originais](fontes/validacao_entrega.json), a [primeira revisão](fontes/validacao_visual.json) e a [revisão 2](fontes/validacao_design_v2.json) distinguem provas e limitações. A abertura manual do HTML local permanece pendente porque a ferramenta bloqueia `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
 
 ### Requisitos adicionais do desafio final
 
@@ -462,30 +462,32 @@ Exemplos sintéticos: `12345 -> 12.345` e `25.5 -> 25,5%`. A mediana poderá con
 
 | Ordem / função | Mart | Representação |
 |---|---|---|
-| 1. `cortes_mensais` | `cortes_mensais` | Linha com marcadores para postos; eventos e quantificados no hover; lacunas preservadas |
-| 2. `postos_por_empresa` | `empresas` | Dez maiores somas conhecidas, barras horizontais e desempate por empresa |
-| 3. `eventos_por_atribuicao` | `atribuicao_ia` | Barras com quantidade e percentual disponíveis no mart |
-| 4. `eventos_por_execucao` | `execucao_cortes` | Barras por situação do evento |
-| 5. `eventos_por_familia` | `familias_ocupacionais` | Barras de eventos distintos e aviso de sobreposição |
-| 6. `eventos_por_evidencia` | `evidencias` | Barras na ordem Tier 1, Tier 2, Tier 3 |
-| 7. `concentracao_empresas` | `concentracao_empresas` | Curva acumulada; referência tracejada em 80% |
+| 1. `cortes_mensais` | `cortes_mensais` | Colunas de postos por mês; eventos e quantificados no hover; lacunas preservadas |
+| 2. `eventos_por_atribuicao` | `atribuicao_ia` | Rosca com contagens e percentuais do mart; categorias exclusivas |
+| 3. `postos_por_empresa` | `empresas` | Dez maiores totais conhecidos, barras horizontais e desempate por empresa |
+| 4. `eventos_por_execucao` | `execucao_cortes` | Colunas por situação do evento, nome completo no hover |
+| 5. `eventos_por_evidencia` | `evidencias` | Pizza na ordem Tier 1, Tier 2, Tier 3; categorias exclusivas |
+| 6. `eventos_por_familia` | `familias_ocupacionais` | Barras de eventos distintos e aviso de sobreposição; nunca pizza |
+| 7. `concentracao_empresas` | `concentracao_empresas` | Curva com área discreta; referência tracejada em 80% |
 
-As funções recebem DataFrame, devolvem figura Plotly, não consultam banco e não alteram o DataFrame original. Manter identidade visual comum, unidades nos eixos, hover legível e títulos de negócio; o README liga cada gráfico ao mart. `figuras(dados, tema="claro")` aplica a paleta de `TEMAS`, sem alterar coordenadas. O claro usa azul `#2463D5`; o escuro, `#78B4FF`. O mensal tem 360 px, as barras 480 px e a faixa final 600 px. O eixo mensal exibe até quatro datas para evitar sobreposição no celular; todos os pontos continuam na curva. Classificações são traduzidas na apresentação, preservando os códigos da fonte no hover. Ver [design/visual.md](design/visual.md).
+As funções recebem DataFrame, devolvem figura Plotly, não consultam banco e não alteram o DataFrame original. `figuras(dados, tema="claro")` aplica a paleta sem mudar dados, categorias ou percentuais. Azul claro `#235C95`, escuro `#78B4FF`, tons categóricos explícitos nas pizzas e textos com contraste. Alturas: mensal 310 px; atribuição 390; empresa, execução e evidência 355; famílias 455; concentração 265. Até quatro datas no eixo mensal; todos os meses permanecem nos dados. Ausência de quantidade não vira zero. Classificações são traduzidas, preservando os códigos no hover. `tabela_empresas` ordena e formata cinco linhas do mart, escapando o texto, sem agregação. Ver [design/visual.md](design/visual.md).
+
+Nas pizzas, áreas usam contagens exclusivas e rótulos usam `pct_eventos` do SQL. Não recalcular percentuais em pandas. Por arredondamento, a soma dos rótulos pode ser 100,1%; avisar. Não usar pizza para famílias ocupacionais, cujos eventos se sobrepõem.
 
 Ordenar, recortar por período, selecionar `head(10)` e formatar são operações de apresentação permitidas. `groupby`, `sum`, `mean`, `median`, `merge`, pivôs e criação de medidas entre colunas ficam no SQL. Não há exceção de complemento percentual herdada da recompra da Olist.
 
 ## 14. Dashboard: `app.py`
 
-Página `layout="wide"`, título **Demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os oito marts são lidos uma vez por carregamento via `painel.ler()`. Cabeçalho azul-marinho, cartões com ícones e ajuda, seções alinhadas e rodapé com atribuição seguem as referências visuais fornecidas.
+Página `layout="wide"`, título **Registro de demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os oito marts são lidos uma vez por carregamento via `painel.ler()`. A revisão 2 segue a composição financeira da referência: cabeçalho compacto azul-marinho com âncoras, indicadores, painéis retangulares, seções em caixa alta, diversidade de formas e tabela de consulta. Substitui o cabeçalho grande e a organização anterior.
 
-Seletor **Claro / Escuro** no topo, claro por padrão e persistente durante filtros e recarga na sessão. `painel.estilos(tema)` lê `design/painel.css` e injeta as variáveis da paleta; `painel.figuras` aplica a mesma aparência às figuras. `st.plotly_chart(..., theme=None)` preserva as cores definidas. Não acrescentar dependências ou medidas para trocar o tema. No desktop, cartões em quatro e três; até 1050 px, duas colunas e comparações empilhadas; até 650 px, ocultar os ícones decorativos dos cartões para acomodar os textos. O último cartão ocupa o espaço restante. Conservar as quatro faixas lógicas abaixo.
+Seletor **Claro / Escuro** no topo, claro por padrão e persistente durante filtros e recarga na sessão. `painel.estilos(tema)` lê `design/painel.css`; `painel.figuras` aplica a mesma aparência às figuras. `st.plotly_chart(..., theme=None)` respeita as cores; hover disponível e barra de ferramentas oculta para reduzir ruído. Sem novas dependências ou medidas. Quatro cartões principais e três complementares em faixa compacta. Até 950 px, principais em duas colunas e gráficos empilhados; até 650 px, cabeçalho se reorganiza e ícones decorativos dos cartões são ocultados. As três medidas complementares continuam alinhadas.
 
-### Quatro faixas na mesma organização do projeto anterior
+### Quatro faixas na composição revisada conforme a referência
 
 1. **Sete cartões:** eventos de corte; empresas com cortes; postos contabilizados; postos reportados não contabilizados; cortes com quantidade contabilizada; mediana dos eventos contabilizados; declarações sem corte discreto.
-2. **Largura inteira:** evolução mensal de postos contabilizados.
-3. **Três colunas:** postos por empresa; eventos por atribuição; eventos por execução.
-4. **Três colunas:** eventos por família; eventos por evidência; concentração por empresa.
+2. **Duas colunas, proporção 2:1:** evolução mensal em colunas com filtro; atribuição à IA em rosca.
+3. **Três colunas:** barras por empresa; colunas por execução; pizza por evidência.
+4. **Duas colunas, proporção 1,25:1:** barras por família; concentração e tabela das cinco primeiras empresas empilhadas à direita.
 
 Ajuda dos cartões e legendas deverão explicitar populações, desconhecidos e que postos contabilizados não significam necessariamente cortes já executados. A mediana considera apenas cortes com valor conhecido; a cobertura torna visível essa limitação.
 
@@ -495,7 +497,7 @@ Ajuda dos cartões e legendas deverão explicitar populações, desconhecidos e 
 - `st.select_slider` recortará somente a figura mensal. Cartões e outras seis figuras representarão o snapshot inteiro; avisar isso de forma visível.
 - O HTML usará o período padrão completo. Não terá filtro.
 - `st.cache_data` guardará DataFrames e metadados da carga, nunca conexão.
-- `Atualizar dados` limpa o cache e faz nova leitura dos marts, sem baixar outra versão da fonte. O cache pode mostrar o snapshot carregado até essa recarga; não anunciar atualização automática.
+- `Atualizar` limpa o cache e faz nova leitura dos marts, sem baixar outra versão da fonte. O cache pode mostrar o snapshot carregado até essa recarga; não anunciar atualização automática.
 - Banco ou mart ausente gerará `st.error` com o comando de reconstrução e `st.stop()`, sem criar banco nem mostrar um painel parcialmente carregado.
 - Usar as figuras de `painel.py`, com largura adaptável. A ordenação interna das categorias não dependerá da ordem incidental do banco.
 
@@ -601,7 +603,7 @@ Manter o limite de **60% total de linhas**, não por arquivo. `app.py` e `ui.py`
 
 O pacote `pipeline/` terá `__init__.py`, permitindo descobrir módulos não importados na medição. Conferir no relatório que todos os módulos previstos aparecem, inclusive como 0% quando não exercitados. Se optar futuramente por namespace package, revisar a descoberta e `include_namespace_packages`, além das exclusões.
 
-Examinar a coluna `Missing` e justificar linhas não exercitadas. Aprovar a porcentagem não prova fórmulas corretas, rollback ou qualidade visual. Após a modernização, o resultado é **97,97% de cobertura e 44 testes aprovados**: oito linhas não exercitadas, sendo quatro chamadas de entrada, o erro defensivo para associações órfãs e três linhas de montagem do CSS, conferido no app. A etapa G anterior teve 98,65% e 42 testes, registrada separadamente. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
+Examinar `Missing` e justificar linhas não exercitadas. Após a revisão 2, são **97,62% e 46 testes**: dez linhas ausentes, sendo quatro chamadas de entrada, erro defensivo para associações órfãs, três linhas de montagem do CSS conferidas no app e duas para percentual opcional no hover de barras, sem essa coluna nos marts atuais de empresa/família. A etapa G teve 98,65%/42 testes e a H 97,97%/44, registradas separadamente. Cobertura não prova qualidade visual nem substitui conferir valores, populações e rollback. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
 
 Verificar a independência da suíte rodando-a sem uma carga real prévia. Os testes devem continuar aprovados em um checkout sem banco e sem o CSV de produção.
 

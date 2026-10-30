@@ -1,0 +1,104 @@
+{
+  "data_verificacao": "2026-10-30",
+  "commit_implementacao": "9948c9bc8889e0131ef6773c79d252218a5e4962",
+  "testes_unitarios": 46,
+  "arquivos_testes": 6,
+  "cobertura_percentual": 97.62,
+  "instrucoes_medidas": 420,
+  "instrucoes_nao_executadas": 10,
+  "linhas_nao_executadas": {
+    "painel.py": [
+      166,
+      167,
+      168,
+      278,
+      279
+    ],
+    "pipeline/ingestao.py": [
+      81
+    ],
+    "pipeline/marts.py": [
+      98
+    ],
+    "pipeline/transformacao.py": [
+      138,
+      180
+    ],
+    "relatorio.py": [
+      130
+    ]
+  },
+  "ruff_check_e_formatacao": true,
+  "app_test": {
+    "sete_valores": [
+      "302",
+      "250",
+      "83.847",
+      "278.169",
+      "30,8%",
+      "314",
+      "18"
+    ],
+    "tipos_figuras": [
+      "bar",
+      "pie",
+      "bar",
+      "bar",
+      "pie",
+      "bar",
+      "scatter"
+    ],
+    "rosca_atribuicao_hole": 0.68,
+    "pizza_evidencias": true,
+    "tabela_presente": true,
+    "valores_e_percentuais_iguais_entre_temas": true,
+    "filtro_altera_apenas_mensal": true,
+    "tema_preservado_apos_filtro_e_recarga": true
+  },
+  "chrome_viewports": [
+    {
+      "largura": 1310,
+      "altura": 581
+    },
+    {
+      "largura": 390,
+      "altura": 844
+    }
+  ],
+  "chrome_verificacoes": [
+    "Temas claro e escuro",
+    "Colunas mensais e rosca renderizadas",
+    "Barras de empresas, colunas de execucao e pizza renderizadas",
+    "Familias, concentracao, tabela e rodape",
+    "Links de navegacao entre secoes",
+    "Sete valores legiveis no celular",
+    "Graficos empilhados e legendas completas no celular"
+  ],
+  "contraste_minimo_textos_percentuais_pizzas": {
+    "claro": 4.51,
+    "escuro": 5.4
+  },
+  "html_bytes": 74347,
+  "html_menor_que_200kb": true,
+  "html_7_testes_aprovados": true,
+  "html_ids_fixos_e_cdn_unico": true,
+  "html_visual_local": "Pendente manualmente; ferramenta bloqueou file:// na etapa anterior.",
+  "clone_limpo_repetido_nesta_revisao": false,
+  "registros_historicos": [
+    "fontes/validacao_entrega.json",
+    "fontes/validacao_visual.json"
+  ],
+  "sha256_csv": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674",
+  "sha256_arquivos": {
+    "app.py": "98fc6f67ea950b2c16894e25332fe3fdab911eb998b6a87ccd46e89c4aa556ad",
+    "painel.py": "83f605d0ba78c8ec17654618ab0b39f696b3660f1d81d84867d7fc511fa758f3",
+    "relatorio.py": "e6010d49e8a6df7b6779005411e7ccc8614a44bd57df78dd5daa8f3500287055",
+    "design/painel.css": "1f127aa7c6ac498e3533eeb31cccaf45ef24b5fa850ddb7db57990852ad1ff11",
+    "design/visual.md": "d86a6ae05b0c040a2c28998dadaf521371c718ef1e471262fb5fddb0d6477594",
+    "design/painel-claro.jpg": "c5d097872355c424d1a670a7d8bc8419c300d8d448d42c6e4656bb0e8da30483",
+    "design/painel-escuro.jpg": "0372ec9d9ee802823ccd02a3f35495fa9dc6cff8e4003c2c2e7fcf85988bb466",
+    "design/graficos-claro.jpg": "2ee53284536eb2c9b0ff916b6aab4da5ec2178105ed0420d5d3b28612fdd566e",
+    "design/graficos-escuro.jpg": "3850021dc3f23c19e1849a16aae45a013a1466f3615c110dc481b5370894f83c",
+    "design/panorama-claro.jpg": "f01a1020c56e273602a481d854457a811cd11045a7cd8ffd2182718f02f670c3"
+  }
+}
