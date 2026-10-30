@@ -1,0 +1,35 @@
+{
+  "commit_validado": "4b414c094099d9e969318a688fbb26a819bf2cf9",
+  "clone_limpo": true,
+  "testes_sem_csv_e_sem_banco_real": true,
+  "testes_unitarios": 42,
+  "hash_csv_confere": true,
+  "pipeline_tres_etapas_reproduzido": true,
+  "duas_geracoes_html_iguais_exceto_rodape": true,
+  "html_bytes": 69441,
+  "abertura_file_url": "Bloqueada pela politica do navegador da ferramenta; verificacao visual manual pendente.",
+  "data_verificacao": "2026-10-30",
+  "cobertura_percentual": 98.65,
+  "instrucoes_medidas": 370,
+  "instrucoes_nao_executadas": 5,
+  "ruff_check_e_formatacao": true,
+  "descoberta_modulo_nao_importado_com_zero_por_cento": true,
+  "app_filtro_apenas_mensal": true,
+  "app_recarga_e_banco_ausente": true,
+  "app_visual_larguras_verificadas": [
+    1366,
+    768
+  ],
+  "repositorio_publico_pessoal_sem_fork": true,
+  "url_repositorio": "https://github.com/adrianobuilder/demissoes_ia",
+  "sha256_modulos_validados": {
+    "pipeline/__init__.py": "be0e099723cee185858ecf5c2762c2e05870a25cb2be14eaddec32f38da99dc1",
+    "pipeline/db.py": "ad7906b66168ee1070338eb02975c1c9d7f24ed8881f486a48c697e228f9e186",
+    "pipeline/ingestao.py": "8d01fadc74ff73731ac1c479a0f7a80668f865b201f9ec8efb559968c956518a",
+    "pipeline/marts.py": "43ea4fe8e6befd2da987c5091a91b5abde526d7990e334a1f927767154f7fed4",
+    "pipeline/transformacao.py": "c10a510604eeba4094b50d66fa4de5c603554bd329d5bb4a8ce13c5c7765f14c",
+    "painel.py": "9a6200e05f39d92f57ce6544005ecf812059ac9f0d207a6130593781208bc29a",
+    "app.py": "b7b2401dfc725c6e24668f12b18f5b0925b81b4cc2119291c69df868055b86e9",
+    "relatorio.py": "cf3d1ef16f4eb8e046c19854b4ce609d9e0c64737dc8488acbf984e7d2043617"
+  }
+}

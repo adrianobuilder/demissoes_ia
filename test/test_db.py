@@ -54,5 +54,10 @@ def test_desregistra_dataframe_apos_erro(tmp_path, monkeypatch):
     with db.conectar(read_only=True) as con:
         with pytest.raises(duckdb.Error):
             db.gravar(con, "raw", "dados", pd.DataFrame({"a": [1]}))
-        with pytest.raises(duckdb.CatalogException):
-            con.execute("SELECT * FROM _entrada_dataframe")
+        assert (
+            con.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_name = '_entrada_dataframe'"
+            ).fetchall()
+            == []
+        )

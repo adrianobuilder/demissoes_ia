@@ -13,16 +13,16 @@ O CSV recebido acompanha `raw/` sem edição. Para citar um evento, preservar se
 
 ## Perguntas e modelo
 
-Vamos estudar evolução mensal, empresas, atribuição à IA, execução, evidências, famílias ocupacionais e concentração dos postos contabilizados.
+O projeto responde como evoluem os cortes por mês, quais empresas têm mais postos contabilizados, como os eventos se distribuem por atribuição, execução e evidência, quais famílias aparecem e como os postos conhecidos se concentram entre empresas.
 
-| Camada / tabela prevista | O que uma linha representa |
+| Camada / tabela | O que uma linha representa |
 |---|---|
 | `raw.eventos` | Registro exatamente como recebido no CSV, com campos textuais |
 | `refined.eventos` | Evento tipado, identificado por `evento_id` |
 | `refined.evento_familia` | Par único `evento_id` + `familia_ocupacional` |
 | `marts.*` | Indicador no grão declarado no respectivo arquivo SQL |
 
-As duas tabelas refined terão relação de um evento para várias famílias. O indicador de famílias usará JOIN por `evento_id`, contará eventos distintos e não somará postos depois da expansão.
+As duas tabelas refined têm relação de um evento para várias famílias. O indicador de famílias usa JOIN por `evento_id`, conta eventos distintos e não soma postos depois da expansão. A normalização existe porque uma lista multivalorada não tem o mesmo grão de um evento; a associação guarda só a chave e a família.
 
 ## Estado da construção
 
@@ -34,7 +34,7 @@ As duas tabelas refined terão relação de um evento para várias famílias. O 
 - **F1 — biblioteca de apresentação:** `painel.py` entregue com sete cartões, sete figuras e 11 testes aprovados. Sem Streamlit ou agregações de negócio; leitura read-only curta e figuras sem mutação dos dados.
 - **F2 — app:** sete cartões/figuras, cache, recarga e filtro mensal verificados com Streamlit AppTest. Disposição conferida no Chrome em largura normal e 768 px; cartões e gráficos se reorganizam na tela menor.
 - **F3 — HTML:** sete testes aprovados, mesmas figuras/cartões, IDs fixos, CDN único e determinismo do rodapé. Arquivo real gerado com 67,8 KB. A abertura automática de `file://` foi bloqueada pela política do navegador da ferramenta; conferir visualmente com dois cliques ainda é uma verificação manual pendente.
-- **G — validação final e reprodução em clone limpo:** pendente.
+- **G — validação automatizada e reprodução:** 42 testes aprovados, cobertura de 98,65%, Ruff aprovado e reconstrução completa em clone limpo. Os testes também passaram com o CSV ocultado e sem banco do projeto. Evidências em [validacao_entrega.json](fontes/validacao_entrega.json). Permanece apenas a conferência visual manual do HTML local, descrita acima.
 
 ## Preparar o ambiente
 
@@ -48,28 +48,27 @@ uv sync --locked
 
 O nome da pasta clonada pode diferir de `demissao_ia`; os caminhos de produção serão baseados na localização dos módulos. Os arquivos de entrada estão versionados. `.gitattributes` preserva os bytes do CSV e dos documentos originais, inclusive no Windows.
 
-Após preparar o ambiente, a etapa de ingestão já pode ser reproduzida:
+Para reproduzir do zero, execute na pasta clonada:
 
 ```powershell
+uv run pytest --cov
 uv run python -m pipeline.ingestao
-uv run pytest test/test_db.py test/test_ingestao.py
-```
-
-Transformação e seus testes:
-
-```powershell
 uv run python -m pipeline.transformacao
-uv run pytest test/test_transformacao.py
+uv run python -m pipeline.marts
+uv run python relatorio.py
 ```
 
-`refined.eventos` preserva o texto original de famílias. `refined.evento_familia` contém apenas as duas colunas da associação, sem replicar a quantidade de postos. Os dois destinos são substituídos na mesma transação; uma falha preserva ambos.
+Não é necessário KaggleHub, credencial Kaggle ou download adicional do CSV. `uv sync --locked` usa o lock versionado; a instalação de pacotes pode precisar de internet. Os testes podem rodar antes da carga: usam só dados inventados e bancos temporários.
 
-Indicadores e seus testes:
+Para abrir o dashboard, depois da carga:
 
 ```powershell
-uv run python -m pipeline.marts
-uv run pytest test/test_marts.py
+uv run streamlit run app.py
 ```
+
+Cada etapa substitui seus destinos, sem acumular linhas. Ingestão, transformação e reconstrução dos marts têm transações próprias: uma falha preserva o estado anterior daquela etapa, não desfaz etapas anteriores já concluídas. No executor de marts, qualquer SQL inválido ou sem linhas reverte a reconstrução inteira. As mensagens informam o erro; não considerar a carga atualizada após uma falha.
+
+`refined.eventos` preserva o texto original de famílias. `refined.evento_familia` contém apenas as duas colunas da associação, sem replicar a quantidade de postos. Os dois destinos são substituídos na mesma transação; uma falha preserva ambos. Identificadores conflitantes causam erro em vez de escolher uma versão arbitrária. Vazios viram nulos em refined, enquanto `NA` continua texto válido.
 
 ## Indicadores e SQL de origem
 
@@ -103,9 +102,24 @@ uv run pytest test/test_relatorio.py
 
 O comando imprime o caminho e o tamanho de `relatorio.html`, gerado na raiz. Abrir o arquivo com dois cliques. Ele contém o período padrão completo, sem filtro; a biblioteca Plotly vem do CDN e precisa de internet. O rodapé registra a geração em `America/Sao_Paulo`, separadamente do snapshot da fonte. Banco e HTML gerados não são versionados; os comandos os reconstroem.
 
+## Verificações e resultados
+
+```powershell
+uv run pytest --cov
+uv run ruff check pipeline painel.py app.py relatorio.py test
+uv run ruff format --check pipeline painel.py app.py relatorio.py test
+git log --oneline --graph --all
+```
+
+Resultado verificado em 30/10/2026: **42 testes em seis arquivos, 98,65% de cobertura total**, 370 instruções e cinco não executadas. A meta é 60%. Quatro linhas ausentes são chamadas sob `if __name__ == '__main__'`; os respectivos `main()` são testados diretamente. A quinta é o erro defensivo para associações órfãs, que não ocorre quando o filho é derivado do próprio pai. Uma sonda temporária criada antes da medição confirmou que um módulo não importado aparece com 0%; a sonda foi removida e não integra o projeto. `app.py` e a UI opcional ficam fora do percentual; o app teve verificação funcional e visual separada.
+
+O clone limpo do repositório reproduziu os 42 testes sem o CSV disponível e sem banco de produção. Após restaurar a entrada, os três comandos reconstruíram 320 eventos, 498 associações e oito marts, com 402 linhas no total. Duas gerações reais do HTML mantiveram conteúdo igual, exceto pelo horário previsto; o arquivo tem 69.441 bytes. O SHA-256 do CSV foi conferido na cópia, no objeto Git e no clone. O AppTest também verificou banco ausente: mensagem de orientação, sem criar arquivo ou exibir um painel parcial.
+
+O [repositório pessoal público](https://github.com/adrianobuilder/demissoes_ia) foi conferido como não sendo fork. Cada etapa foi construída e enviada em um commit próprio. Um merge preservou tanto o commit inicial remoto quanto o histórico local, sem reescrita. O link do repositório é a entrega acadêmica; o envio pela plataforma da aula cabe ao aluno.
+
 ## Limites de interpretação
 
-Eventos de corte e declarações sem corte são populações diferentes. Postos contabilizados e postos reportados não contabilizados não serão somados. Ausência de quantidade não equivale a zero. Associação à IA não comprova causalidade; postos contabilizados também podem pertencer a anúncios ou execução parcial.
+Eventos de corte e declarações sem corte são populações diferentes. Postos contabilizados e postos reportados não contabilizados não são somados. Ausência de quantidade não equivale a zero. Associação à IA não comprova causalidade; postos contabilizados também podem pertencer a anúncios ou execução parcial. País é um campo livre que pode descrever sede, local dos postos ou escopo global; setor também não é uma classificação padronizada. Esses campos foram preservados, sem rankings geográficos ou setoriais no primeiro painel. Não houve auditoria independente de todas as notícias ligadas pelo registro. O ano de 2026 termina em outubro nesta cópia.
 
 ## Uso da IA: conferências e correções
 
@@ -113,6 +127,6 @@ Na apresentação, os testes funcionais não detectaram truncamento dos cartões
 
 Na primeira execução da etapa C, 4 de 12 testes falharam: o código gerado usou `fetchone()` na contagem e tentou desregistrar o DataFrame com um resultado ainda pendente no DuckDB 2.0. A exceção `ResourceInUseException` mostrou a suposição incorreta de compatibilidade com a versão anterior. A correção passou a consumir todo o resultado com `fetchall()` antes de `unregister`; os 12 testes passaram na repetição, incluindo gravação, reexecução, entrada vazia e rollback. A [documentação da API Python](https://www.duckdb.org/docs/lts/clients/python/dbapi) também descreve a necessidade de concluir o resultado antes de outra operação na conexão.
 
-Na preparação do guia, o total reportado exigiu revisão da população: todas as linhas somam 285.969, mas uma declaração sem corte contém 7.800. A conferência por tipo de evento determinou 278.169 para o indicador restrito aos cortes. O diagnóstico ficou registrado em `fontes/perfil_fonte.json`; os testes usarão exemplos inventados para verificar essa separação.
+Na preparação do guia, o total reportado exigiu revisão da população: todas as linhas somam 285.969, mas uma declaração sem corte contém 7.800. A conferência por tipo de evento determinou 278.169 para o indicador restrito aos cortes. O diagnóstico ficou registrado em `fontes/perfil_fonte.json`; os testes usam exemplos inventados para verificar essa separação.
 
 O desenho inicial usava uma CTE para famílias. O requisito adicional de duas tabelas relacionadas levou à tabela física `evento_familia`; essa é uma adaptação ao desafio, não uma segunda fonte independente.

@@ -16,7 +16,7 @@ Há três estados de informação ao longo do documento:
 - **Estrutura prevista:** contrato e organização a implementar no novo projeto.
 - **Opcional:** ferramenta ou extensão que só entra se houver necessidade.
 
-A pasta já contém ambiente/configuração e este documento. A construção seguirá as etapas A a G abaixo, com os resultados efetivamente verificados registrados no README. As escolhas técnicas deste guia são contratos; não antecipam aprovação da implementação.
+As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A validação automatizada teve 42 testes aprovados e 98,65% de cobertura; um clone limpo reproduziu a carga sem depender de um banco anterior. O [README](README.md) e o [registro da validação](fontes/validacao_entrega.json) distinguem provas e limitações. A abertura visual do HTML local com dois cliques permanece pendente, pois o navegador da ferramenta bloqueia o protocolo `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
 
 ### Requisitos adicionais do desafio final
 
@@ -24,7 +24,7 @@ O projeto deve usar uma fonte que permita uso público, duas tabelas relacionada
 
 **Adaptação de 30/10/2026:** a expansão evento–família, antes prevista somente como CTE, passa a ser uma tabela física `refined.evento_familia`, ligada a `refined.eventos` por `evento_id`. Isso modela a lista multivalorada sem inventar outra fonte. O mart 07 usará esse relacionamento com JOIN e contagem distinta de eventos. Cada etapa concluída receberá um commit antes do início da seguinte; não simular um histórico retroativo.
 
-O guia é autossuficiente para orientar a construção. O [documento Olist](../olist/doc.md) permanece como inventário histórico do projeto anterior.
+O guia é autossuficiente. O inventário Olist foi referência histórica durante sua preparação; a reprodução deste repositório não depende de arquivos ou banco do projeto anterior.
 
 ## 2. Método de trabalho: a spec vem antes do código
 
@@ -59,13 +59,15 @@ O `pyproject.toml` atual pertence ao projeto `demissao-ia`, versão `0.1.0`:
 
 Esses valores são restrições declaradas, não uma conferência das versões instaladas. O `uv.lock` registra a resolução do ambiente. Não copiar automaticamente as versões antigas da Olist nem recriar a pasta existente.
 
-### Dependências a acrescentar na etapa de ambiente
+### Dependências da apresentação e aquisição opcional
 
 | Item | Necessidade |
 |---|---|
 | Plotly | Sete figuras interativas reutilizadas pelo app e pelo HTML |
 | pytest-cov / coverage.py | Medição da cobertura total e linhas `Missing` |
 | `kagglehub[pandas-datasets]` | Opcional: aquisição pelo Kaggle; o ZIP local já permite começar |
+
+Plotly e pytest-cov já foram acrescentados ao ambiente e ao lock durante a etapa B. KaggleHub não é necessário para reproduzir a cópia versionada.
 
 HTML e CSS embutidos compõem o relatório, sem outro framework de frontend. PowerShell é o terminal usado no Windows. O runtime não precisa de modelo de IA: IA é o tema dos dados, não uma dependência do pipeline.
 
@@ -86,7 +88,7 @@ HTML e CSS embutidos compõem o relatório, sem outro framework de frontend. Pow
 
 ## 4. Organização dos arquivos e responsabilidades
 
-Árvore de destino, não inventário de arquivos já implementados:
+Estrutura do projeto; itens marcados como opcionais podem permanecer ausentes:
 
 ```text
 demissao_ia/
@@ -101,7 +103,8 @@ demissao_ia/
 │   ├── README_dataset.md             # README preservado do ZIP
 │   ├── LICENSE_dataset.txt           # Licença preservada do ZIP
 │   ├── proveniencia.json             # Snapshot, metodologia, hash e obtenção
-│   └── perfil_fonte.json             # Diagnóstico da cópia, fora dos testes
+│   ├── perfil_fonte.json             # Diagnóstico da cópia, fora dos testes
+│   └── validacao_entrega.json        # Evidências da reprodução e limitações
 ├── pipeline/
 │   ├── __init__.py                    # Pacote explícito
 │   ├── db.py                          # Caminhos, conexão, schemas e gravação
@@ -576,7 +579,7 @@ Capturar mensagens com `redirect_stdout`. Testar o relógio por argumento ou mon
 
 ## 18. Configuração de pytest e cobertura
 
-Configuração prevista para acrescentar ao `pyproject.toml` na etapa de implementação:
+Configuração aplicada ao `pyproject.toml` na etapa de ambiente:
 
 ```toml
 [tool.pytest.ini_options]
@@ -596,13 +599,13 @@ Manter o limite de **60% total de linhas**, não por arquivo. `app.py` e `ui.py`
 
 O pacote `pipeline/` terá `__init__.py`, permitindo descobrir módulos não importados na medição. Conferir no relatório que todos os módulos previstos aparecem, inclusive como 0% quando não exercitados. Se optar futuramente por namespace package, revisar a descoberta e `include_namespace_packages`, além das exclusões.
 
-Examinar a coluna `Missing` e justificar linhas não exercitadas. Aprovar a porcentagem não prova fórmulas corretas, rollback ou qualidade visual. O novo projeto ainda não tem resultado de cobertura; não transportar os 98,17% históricos da Olist para esta entrega.
+Examinar a coluna `Missing` e justificar linhas não exercitadas. Aprovar a porcentagem não prova fórmulas corretas, rollback ou qualidade visual. O resultado deste projeto foi medido separadamente: **98,65% de cobertura e 42 testes aprovados**. As cinco linhas não exercitadas são quatro chamadas de entrada e o erro defensivo para associações órfãs. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
 
 Verificar a independência da suíte rodando-a sem uma carga real prévia. Os testes devem continuar aprovados em um checkout sem banco e sem o CSV de produção.
 
 ## 19. Comandos e ordem de execução
 
-Os comandos abaixo são roteiro para a implementação. Os de pipeline, painel e teste só funcionarão depois da criação dos artefatos. Esta atualização de documentação não instala dependências nem executa essas etapas.
+Os comandos de execução foram verificados, inclusive em um clone limpo. Os comandos `uv add` registram a preparação já realizada; para reproduzir a entrega, basta sincronizar o lock existente. O README apresenta a sequência completa, os resultados e a conferência visual pendente do HTML local.
 
 ### Ambiente existente
 
@@ -857,79 +860,80 @@ Entregue os artefatos da etapa, os critérios verificados e as limitações.
 
 ## 24. Checklist para não deixar conceitos de fora
 
-As caixas abaixo representam aceitação da implementação futura. Ter a regra descrita neste documento não equivale a tê-la implementada ou verificada.
+As caixas abaixo registram as verificações efetivamente realizadas. A única pendência é abrir visualmente o HTML local com dois cliques; o bloqueio do navegador da ferramenta não foi contornado.
 
 ### Fonte e definição
 
-- [ ] CSV, README e licença preservados nos caminhos definidos.
-- [ ] Hash conferido e proveniência registrada, sem inventar versão Kaggle.
-- [ ] Snapshot, metodologia e geração identificados separadamente.
-- [ ] Grão evento, chave e dicionário das 20 colunas nas specs.
-- [ ] Cortes e declarações com populações distintas.
-- [ ] Postos contabilizados, reportados e execução com rótulos corretos.
-- [ ] Limitações de causalidade, geografia, setor e famílias explicadas.
+- [x] CSV, README e licença preservados nos caminhos definidos.
+- [x] Hash conferido e proveniência registrada, sem inventar versão Kaggle.
+- [x] Snapshot, metodologia e geração identificados separadamente.
+- [x] Grão evento, chave e dicionário das 20 colunas nas specs.
+- [x] Cortes e declarações com populações distintas.
+- [x] Postos contabilizados, reportados e execução com rótulos corretos.
+- [x] Limitações de causalidade, geografia, setor e famílias explicadas.
 
 ### Ambiente e infraestrutura
 
-- [ ] Pasta/Git independentes, Python compatível e dependências ajustadas.
-- [ ] `pyproject.toml` e `uv.lock` reproduzem o ambiente.
-- [ ] Plotly e pytest-cov declarados; KaggleHub só se necessário.
-- [ ] Banco exclusivo e caminhos baseados no projeto, sem usuário fixo.
-- [ ] Conexões fechadas, identificadores delimitados e registros liberados.
-- [ ] `.gitignore` e política dos dados/artefatos definidos.
+- [x] Pasta/Git independentes, Python compatível e dependências ajustadas.
+- [x] `pyproject.toml` e `uv.lock` reproduzem o ambiente.
+- [x] Plotly e pytest-cov declarados; KaggleHub só se necessário.
+- [x] Banco exclusivo e caminhos baseados no projeto, sem usuário fixo.
+- [x] Conexões fechadas, identificadores delimitados e registros liberados.
+- [x] `.gitignore` e política dos dados/artefatos definidos.
 
 ### Pipeline
 
-- [ ] CSV sem gzip, todas as colunas raw textuais e cabeçalho validado.
-- [ ] Vazios e tokens como `NA` seguem o contrato.
-- [ ] Arquivo ausente é detectado antes de abrir banco para escrita.
-- [ ] Refined com DATE ISO, BIGINT, BOOLEAN e textos preservados.
-- [ ] Inválidos geram erro, sem conversão silenciosa em nulo.
-- [ ] Duplicata integral e conflito por chave têm tratamentos diferentes.
-- [ ] Raw não é alterada pela transformação.
-- [ ] Reexecução idempotente e transações verificadas em cada etapa.
-- [ ] Vazio e erros de data têm diagnósticos controlados.
-- [ ] Contagens e mensagens em UTF-8 só anunciam sucesso após commit.
+- [x] CSV sem gzip, todas as colunas raw textuais e cabeçalho validado.
+- [x] Vazios e tokens como `NA` seguem o contrato.
+- [x] Arquivo ausente é detectado antes de abrir banco para escrita.
+- [x] Refined com DATE ISO, BIGINT, BOOLEAN e textos preservados.
+- [x] Inválidos geram erro, sem conversão silenciosa em nulo.
+- [x] Duplicata integral e conflito por chave têm tratamentos diferentes.
+- [x] Raw não é alterada pela transformação.
+- [x] Reexecução idempotente e transações verificadas em cada etapa.
+- [x] Vazio e erros de data têm diagnósticos controlados.
+- [x] Contagens e mensagens em UTF-8 só anunciam sucesso após commit.
 
 ### SQL e métricas
 
-- [ ] Oito arquivos numerados, com pergunta, grão, população e unidade.
-- [ ] Sete KPIs vêm do SQL e usam denominadores compatíveis.
-- [ ] Desconhecido permanece nulo; denominador zero está protegido.
-- [ ] Declaração não infla cartão de postos reportados nos cortes.
-- [ ] Calendário mantém meses e lacunas sem inventar quantidades.
-- [ ] Duas tabelas físicas refined, com chave relacionada e JOIN real no mart 07.
-- [ ] Expansão de famílias não duplica postos nem eventos por par.
-- [ ] Medidas não aditivas e cardinalidades documentadas.
-- [ ] Ranking e acumulado com desempate determinístico.
-- [ ] Erro, SQL removido, dependência ausente e mart vazio seguem rollback.
+- [x] Oito arquivos numerados, com pergunta, grão, população e unidade.
+- [x] Sete KPIs vêm do SQL e usam denominadores compatíveis.
+- [x] Desconhecido permanece nulo; denominador zero está protegido.
+- [x] Declaração não infla cartão de postos reportados nos cortes.
+- [x] Calendário mantém meses e lacunas sem inventar quantidades.
+- [x] Duas tabelas físicas refined, com chave relacionada e JOIN real no mart 07.
+- [x] Expansão de famílias não duplica postos nem eventos por par.
+- [x] Medidas não aditivas e cardinalidades documentadas.
+- [x] Ranking e acumulado com desempate determinístico.
+- [x] Erro, SQL removido, dependência ausente e mart vazio seguem rollback.
 
 ### Apresentação e entrega
 
-- [ ] `painel.py` sem Streamlit, agregações de negócio ou mutação da entrada.
-- [ ] Leitura curta read-only, identificadores validados e marts ausentes claros.
-- [ ] Formatação brasileira, ausentes “—” e unidades sem moeda.
-- [ ] Sete cartões, sete funções e quatro faixas iguais nas duas saídas.
-- [ ] Filtro afeta só mensal; período padrão e aviso de escopo visíveis.
-- [ ] Cache de dados e recarga conferidos, sem conexão persistente.
-- [ ] HTML com CDN único, IDs fixos, escape e timestamp controlável.
-- [ ] Snapshot e horário de geração não são confundidos.
-- [ ] HTML abaixo de 200 KB e abertura com dois cliques conferida.
-- [ ] Repetição com entradas iguais muda apenas o rodapé previsto.
+- [x] `painel.py` sem Streamlit, agregações de negócio ou mutação da entrada.
+- [x] Leitura curta read-only, identificadores validados e marts ausentes claros.
+- [x] Formatação brasileira, ausentes “—” e unidades sem moeda.
+- [x] Sete cartões, sete funções e quatro faixas iguais nas duas saídas.
+- [x] Filtro afeta só mensal; período padrão e aviso de escopo visíveis.
+- [x] Cache de dados e recarga conferidos, sem conexão persistente.
+- [x] HTML com CDN único, IDs fixos, escape e timestamp controlável.
+- [x] Snapshot e horário de geração não são confundidos.
+- [x] HTML abaixo de 200 KB.
+- [ ] Abertura visual do HTML local com dois cliques (pendente: protocolo bloqueado pela ferramenta).
+- [x] Repetição com entradas iguais muda apenas o rodapé previsto.
 
 ### Testes e fechamento
 
-- [ ] Seis arquivos em `test/`, coleta inequívoca e assert em cada teste.
-- [ ] Dados inventados e DuckDB real temporário; nenhum dado real obrigatório.
-- [ ] Exemplos cobrem nulos, conflito, conversão, sobreposição e coortes.
-- [ ] Sucesso, erro, idempotência e estado preservado verificados.
-- [ ] Todos os módulos previstos aparecem na cobertura, inclusive não importados.
-- [ ] Cobertura total mínima de 60% e `Missing` analisado.
-- [ ] Suíte funciona sem carga real prévia.
-- [ ] Ruff, comandos, dashboard e HTML verificados no escopo entregue.
-- [ ] README atualizado com execução e resultados efetivamente obtidos.
-- [ ] Repositório público pessoal, sem fork, com commits progressivos por etapa.
-- [ ] README termina com erros reais da IA, forma de descoberta e correção.
+- [x] Seis arquivos em `test/`, coleta inequívoca e assert em cada teste.
+- [x] Dados inventados e DuckDB real temporário; nenhum dado real obrigatório.
+- [x] Exemplos cobrem nulos, conflito, conversão, sobreposição e coortes.
+- [x] Sucesso, erro, idempotência e estado preservado verificados.
+- [x] Todos os módulos previstos aparecem na cobertura, inclusive não importados.
+- [x] Cobertura total mínima de 60% e `Missing` analisado.
+- [x] Suíte funciona sem carga real prévia.
+- [x] Ruff, comandos e dashboard verificados; HTML coberto pelos testes estruturais e de valores.
+- [x] README atualizado com execução e resultados efetivamente obtidos.
+- [x] Repositório público pessoal, sem fork, com commits progressivos por etapa.
+- [x] README termina com erros reais da IA, forma de descoberta e correção.
 
 ## 25. Referências e rastreabilidade
 
@@ -938,7 +942,7 @@ Fontes principais deste guia:
 - ZIP fornecido: `C:\Users\adria\Downloads\archive.zip`; definições e termos em `README.md` e `LICENSE.txt` internos; perfil calculado sobre `ai-layoffs-register.csv`.
 - [Página do dataset indicada pelo usuário](https://www.kaggle.com/datasets/ailayoffs/ai-layoffs-register-2023-2026-every-row-sourced).
 - [Configuração atual do novo projeto](pyproject.toml) e [lock existente](uv.lock).
-- [Inventário da estrutura e dos aprendizados Olist](../olist/doc.md).
+- Inventário Olist, usado como referência histórica de padrões durante a preparação; não é um arquivo necessário para reproduzir este repositório.
 - [KaggleHub — documentação oficial do adaptador pandas](https://github.com/Kaggle/kagglehub#kaggledatasetadapterpandas) e [implementação oficial da API](https://github.com/Kaggle/kagglehub/blob/main/src/kagglehub/datasets.py).
 - [uv — projetos e dependências](https://docs.astral.sh/uv/guides/projects/).
 - [coverage.py — configuração e descoberta de namespace packages](https://coverage.readthedocs.io/en/latest/config.html#report-include-namespace-packages).
