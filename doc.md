@@ -16,7 +16,7 @@ Há três estados de informação ao longo do documento:
 - **Estrutura prevista:** contrato e organização a implementar no novo projeto.
 - **Opcional:** ferramenta ou extensão que só entra se houver necessidade.
 
-As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A validação automatizada teve 42 testes aprovados e 98,65% de cobertura; um clone limpo reproduziu a carga sem depender de um banco anterior. O [README](README.md) e o [registro da validação](fontes/validacao_entrega.json) distinguem provas e limitações. A abertura visual do HTML local com dois cliques permanece pendente, pois o navegador da ferramenta bloqueia o protocolo `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
+As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo. Após a modernização visual, são 44 testes e 97,97%, além de AppTest e conferência no Chrome em 1310 e 390 px. O [README](README.md), o [registro original](fontes/validacao_entrega.json) e a [validação visual](fontes/validacao_visual.json) distinguem provas e limitações. A abertura visual do HTML local com dois cliques permanece pendente, pois o navegador da ferramenta bloqueia o protocolo `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
 
 ### Requisitos adicionais do desafio final
 
@@ -470,13 +470,15 @@ Exemplos sintéticos: `12345 -> 12.345` e `25.5 -> 25,5%`. A mediana poderá con
 | 6. `eventos_por_evidencia` | `evidencias` | Barras na ordem Tier 1, Tier 2, Tier 3 |
 | 7. `concentracao_empresas` | `concentracao_empresas` | Curva acumulada; referência tracejada em 80% |
 
-As funções recebem DataFrame, devolvem figura Plotly, não consultam banco e não alteram o DataFrame original. Manter identidade visual comum, unidades nos eixos, hover legível e títulos associados ao mart. Azul `#2563EB` pode ser reaproveitado como cor inicial; altura e responsividade devem ser conferidas com os novos rótulos.
+As funções recebem DataFrame, devolvem figura Plotly, não consultam banco e não alteram o DataFrame original. Manter identidade visual comum, unidades nos eixos, hover legível e títulos de negócio; o README liga cada gráfico ao mart. `figuras(dados, tema="claro")` aplica a paleta de `TEMAS`, sem alterar coordenadas. O claro usa azul `#2463D5`; o escuro, `#78B4FF`. O mensal tem 360 px, as barras 480 px e a faixa final 600 px. O eixo mensal exibe até quatro datas para evitar sobreposição no celular; todos os pontos continuam na curva. Classificações são traduzidas na apresentação, preservando os códigos da fonte no hover. Ver [design/visual.md](design/visual.md).
 
 Ordenar, recortar por período, selecionar `head(10)` e formatar são operações de apresentação permitidas. `groupby`, `sum`, `mean`, `median`, `merge`, pivôs e criação de medidas entre colunas ficam no SQL. Não há exceção de complemento percentual herdada da recompra da Olist.
 
 ## 14. Dashboard: `app.py`
 
-Página `layout="wide"`, título **Registro de demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os oito marts serão lidos uma vez por carregamento via `painel.ler()`.
+Página `layout="wide"`, título **Demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os oito marts são lidos uma vez por carregamento via `painel.ler()`. Cabeçalho azul-marinho, cartões com ícones e ajuda, seções alinhadas e rodapé com atribuição seguem as referências visuais fornecidas.
+
+Seletor **Claro / Escuro** no topo, claro por padrão e persistente durante filtros e recarga na sessão. `painel.estilos(tema)` lê `design/painel.css` e injeta as variáveis da paleta; `painel.figuras` aplica a mesma aparência às figuras. `st.plotly_chart(..., theme=None)` preserva as cores definidas. Não acrescentar dependências ou medidas para trocar o tema. No desktop, cartões em quatro e três; até 1050 px, duas colunas e comparações empilhadas; até 650 px, ocultar os ícones decorativos dos cartões para acomodar os textos. O último cartão ocupa o espaço restante. Conservar as quatro faixas lógicas abaixo.
 
 ### Quatro faixas na mesma organização do projeto anterior
 
@@ -493,7 +495,7 @@ Ajuda dos cartões e legendas deverão explicitar populações, desconhecidos e 
 - `st.select_slider` recortará somente a figura mensal. Cartões e outras seis figuras representarão o snapshot inteiro; avisar isso de forma visível.
 - O HTML usará o período padrão completo. Não terá filtro.
 - `st.cache_data` guardará DataFrames e metadados da carga, nunca conexão.
-- `Recarregar dados` limpará o cache e fará nova leitura. O cache pode mostrar o snapshot carregado até essa recarga; não anunciar atualização automática.
+- `Atualizar dados` limpa o cache e faz nova leitura dos marts, sem baixar outra versão da fonte. O cache pode mostrar o snapshot carregado até essa recarga; não anunciar atualização automática.
 - Banco ou mart ausente gerará `st.error` com o comando de reconstrução e `st.stop()`, sem criar banco nem mostrar um painel parcialmente carregado.
 - Usar as figuras de `painel.py`, com largura adaptável. A ordenação interna das categorias não dependerá da ordem incidental do banco.
 
@@ -599,7 +601,7 @@ Manter o limite de **60% total de linhas**, não por arquivo. `app.py` e `ui.py`
 
 O pacote `pipeline/` terá `__init__.py`, permitindo descobrir módulos não importados na medição. Conferir no relatório que todos os módulos previstos aparecem, inclusive como 0% quando não exercitados. Se optar futuramente por namespace package, revisar a descoberta e `include_namespace_packages`, além das exclusões.
 
-Examinar a coluna `Missing` e justificar linhas não exercitadas. Aprovar a porcentagem não prova fórmulas corretas, rollback ou qualidade visual. O resultado deste projeto foi medido separadamente: **98,65% de cobertura e 42 testes aprovados**. As cinco linhas não exercitadas são quatro chamadas de entrada e o erro defensivo para associações órfãs. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
+Examinar a coluna `Missing` e justificar linhas não exercitadas. Aprovar a porcentagem não prova fórmulas corretas, rollback ou qualidade visual. Após a modernização, o resultado é **97,97% de cobertura e 44 testes aprovados**: oito linhas não exercitadas, sendo quatro chamadas de entrada, o erro defensivo para associações órfãs e três linhas de montagem do CSS, conferido no app. A etapa G anterior teve 98,65% e 42 testes, registrada separadamente. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
 
 Verificar a independência da suíte rodando-a sem uma carga real prévia. Os testes devem continuar aprovados em um checkout sem banco e sem o CSV de produção.
 

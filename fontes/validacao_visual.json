@@ -1,0 +1,78 @@
+{
+  "data_verificacao": "2026-10-30",
+  "commit_implementacao": "28bef30f074883efbc295fbee356d1e6ca06d991",
+  "testes_unitarios": 44,
+  "arquivos_testes": 6,
+  "cobertura_percentual": 97.97,
+  "instrucoes_medidas": 395,
+  "instrucoes_nao_executadas": 8,
+  "linhas_nao_executadas": {
+    "painel.py": [
+      142,
+      143,
+      144
+    ],
+    "pipeline/ingestao.py": [
+      81
+    ],
+    "pipeline/marts.py": [
+      98
+    ],
+    "pipeline/transformacao.py": [
+      138,
+      180
+    ],
+    "relatorio.py": [
+      113
+    ]
+  },
+  "ruff_check_e_formatacao": true,
+  "app_test": {
+    "sete_cartoes": [
+      "302",
+      "250",
+      "83.847",
+      "278.169",
+      "30,8%",
+      "314",
+      "18"
+    ],
+    "sete_figuras": true,
+    "coordenadas_iguais_entre_temas": true,
+    "filtro_altera_apenas_mensal": true,
+    "tema_persistente_apos_filtro_e_recarga": true
+  },
+  "chrome_viewports": [
+    {
+      "largura": 1310,
+      "altura": 581
+    },
+    {
+      "largura": 390,
+      "altura": 844
+    }
+  ],
+  "chrome_verificacoes": [
+    "Temas claro e escuro",
+    "Cartoes sem numeros ou rotulos truncados",
+    "Graficos empilhados na tela estreita",
+    "Quatro datas mensais sem sobreposicao no celular",
+    "Ajuda com contraste no tema escuro",
+    "Rodape com atribuicao"
+  ],
+  "html_bytes": 71549,
+  "html_limite_bytes": 200000,
+  "html_testes_determinismo": true,
+  "html_visual_local": "Verificacao manual pendente; file:// bloqueado pela politica da ferramenta na etapa anterior.",
+  "clone_limpo_repetido_nesta_revisao": false,
+  "registro_clone_anterior": "fontes/validacao_entrega.json",
+  "sha256_arquivos": {
+    "app.py": "f910cd4df15541babf52e71b7f345f830fe13fc32f2118ee70acf0dcb064f855",
+    "painel.py": "9f866d63a71ffed327db64742e1d8234220f07a2798137e77cd3bbc31984893e",
+    "design/painel.css": "bbfcdb4c6ebcb6ad050a8a003426ed97236a2eccd70537f17fbd3f5de4dbf838",
+    "design/visual.md": "49c61c8950187dd1f7bd80d26046e73afb49fd354c52d63f393f7958b9e37022",
+    "design/painel-claro.jpg": "b8e28ed95017d9c9423c7d7c1d6698eb3b7772fa6b47f5f7bd6348185423e018",
+    "design/painel-escuro.jpg": "b5c3281ff98911530314a74b4d370a29fcf82bc4de81f69947f8942acd861ba8"
+  },
+  "sha256_csv": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674"
+}

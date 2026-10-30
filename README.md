@@ -35,6 +35,7 @@ As duas tabelas refined têm relação de um evento para várias famílias. O in
 - **F2 — app:** sete cartões/figuras, cache, recarga e filtro mensal verificados com Streamlit AppTest. Disposição conferida no Chrome em largura normal e 768 px; cartões e gráficos se reorganizam na tela menor.
 - **F3 — HTML:** sete testes aprovados, mesmas figuras/cartões, IDs fixos, CDN único e determinismo do rodapé. Arquivo real gerado com 67,8 KB. A abertura automática de `file://` foi bloqueada pela política do navegador da ferramenta; conferir visualmente com dois cliques ainda é uma verificação manual pendente.
 - **G — validação automatizada e reprodução:** 42 testes aprovados, cobertura de 98,65%, Ruff aprovado e reconstrução completa em clone limpo. Os testes também passaram com o CSV ocultado e sem banco do projeto. Evidências em [validacao_entrega.json](fontes/validacao_entrega.json). Permanece apenas a conferência visual manual do HTML local, descrita acima.
+- **H — modernização visual:** temas claro e escuro, cartões com ícones, seções e grade adaptável. 44 testes aprovados, cobertura de 97,97%, AppTest e leitura visual no Chrome em 1310 e 390 px. Evidências em [validacao_visual.json](fontes/validacao_visual.json); o registro da etapa G permanece como histórico anterior à modernização.
 
 ## Preparar o ambiente
 
@@ -91,7 +92,15 @@ Na cópia real, os cartões retornam 302 cortes, 250 empresas, 83.847 postos con
 uv run streamlit run app.py
 ```
 
-Abrir o endereço mostrado pelo Streamlit. O filtro altera apenas o gráfico mensal; cartões e comparações mantêm o snapshot completo. `Recarregar dados` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados.
+Abrir o endereço mostrado pelo Streamlit. Use **Claro / Escuro** no topo para alternar a aparência da página e dos gráficos. A escolha permanece durante os filtros e a atualização de dados na mesma sessão. O padrão é claro.
+
+As quatro faixas continuam na mesma ordem: cartões, evolução mensal, distribuição dos cortes e evidências/concentração. No desktop, os cartões ocupam duas linhas (quatro e três); em telas menores, duas colunas, com o último cartão em largura inteira. Os gráficos das comparações se empilham abaixo de 1050 px. As definições estão na ajuda de cada cartão e em **Como ler este painel**. As [decisões visuais](design/visual.md) documentam a adaptação das referências fornecidas.
+
+O filtro altera apenas o gráfico mensal; cartões e comparações mantêm o snapshot completo. `Atualizar dados` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados; o botão não baixa outra versão do dataset.
+
+| Claro | Escuro |
+|---|---|
+| ![Prévia do tema claro](design/painel-claro.jpg) | ![Prévia do tema escuro](design/painel-escuro.jpg) |
 
 ## Relatório HTML
 
@@ -111,7 +120,9 @@ uv run ruff format --check pipeline painel.py app.py relatorio.py test
 git log --oneline --graph --all
 ```
 
-Resultado verificado em 30/10/2026: **42 testes em seis arquivos, 98,65% de cobertura total**, 370 instruções e cinco não executadas. A meta é 60%. Quatro linhas ausentes são chamadas sob `if __name__ == '__main__'`; os respectivos `main()` são testados diretamente. A quinta é o erro defensivo para associações órfãs, que não ocorre quando o filho é derivado do próprio pai. Uma sonda temporária criada antes da medição confirmou que um módulo não importado aparece com 0%; a sonda foi removida e não integra o projeto. `app.py` e a UI opcional ficam fora do percentual; o app teve verificação funcional e visual separada.
+Resultado após a modernização, em 30/10/2026: **44 testes em seis arquivos, 97,97% de cobertura total**, 395 instruções e oito não executadas. A meta é 60%. Quatro linhas ausentes são chamadas sob `if __name__ == '__main__'`; os respectivos `main()` são testados diretamente. Uma é o erro defensivo para associações órfãs; as três restantes montam o CSS local, conferido no app. Uma sonda temporária criada na etapa G confirmou que um módulo não importado aparece com 0%; a sonda foi removida e não integra o projeto. `app.py` e a UI opcional ficam fora do percentual; o app teve verificação funcional e visual separada.
+
+O AppTest confirmou os sete valores, sete gráficos, coordenadas iguais nos dois temas, alteração só do mensal pelo filtro e manutenção do tema após recarga. O Chrome mostrou a grade, os textos e os gráficos nos temas claro e escuro; a tela de 390 px confirmou o empilhamento e as datas sem sobreposição. O relatório reutiliza o tema claro e foi regenerado com 69,9 KB; os sete testes do HTML continuam aprovados. Essa revisão não repetiu o clone limpo: a reprodução abaixo registra a etapa G, anterior às mudanças visuais.
 
 O clone limpo do repositório reproduziu os 42 testes sem o CSV disponível e sem banco de produção. Após restaurar a entrada, os três comandos reconstruíram 320 eventos, 498 associações e oito marts, com 402 linhas no total. Duas gerações reais do HTML mantiveram conteúdo igual, exceto pelo horário previsto; o arquivo tem 69.441 bytes. O SHA-256 do CSV foi conferido na cópia, no objeto Git e no clone. O AppTest também verificou banco ausente: mensagem de orientação, sem criar arquivo ou exibir um painel parcial.
 
@@ -124,6 +135,8 @@ Eventos de corte e declarações sem corte são populações diferentes. Postos 
 ## Uso da IA: conferências e correções
 
 Na apresentação, os testes funcionais não detectaram truncamento dos cartões numa tela de 768 px. A conferência no Chrome revelou o problema; a grade passou a reorganizar os cartões e empilhar os gráficos nessa largura, preservando as medidas e as quatro faixas lógicas. A verificação visual complementa os testes, sem ser substituída pela cobertura.
+
+Na modernização, sete cartões lado a lado cortaram um valor no desktop. A grade foi corrigida para quatro e três. Na tela de 390 px, rótulos e datas também ficaram apertados: os ícones decorativos são ocultados nessa largura, os textos podem quebrar sem truncamento e o eixo mensal mostra até quatro datas. Os pontos mensais, as lacunas e os valores foram preservados; o hover continua mostrando cada mês.
 
 Na primeira execução da etapa C, 4 de 12 testes falharam: o código gerado usou `fetchone()` na contagem e tentou desregistrar o DataFrame com um resultado ainda pendente no DuckDB 2.0. A exceção `ResourceInUseException` mostrou a suposição incorreta de compatibilidade com a versão anterior. A correção passou a consumir todo o resultado com `fetchall()` antes de `unregister`; os 12 testes passaram na repetição, incluindo gravação, reexecução, entrada vazia e rollback. A [documentação da API Python](https://www.duckdb.org/docs/lts/clients/python/dbapi) também descreve a necessidade de concluir o resultado antes de outra operação na conexão.
 
