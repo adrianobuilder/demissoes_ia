@@ -182,6 +182,35 @@ Os testes podem rodar antes da carga: usam dados inventados e bancos temporário
 
 Essas contagens descrevem o snapshot versionado, não um limite fixo para futuras fontes. A carga não busca atualizações no Kaggle. Uma nova cópia exige conferir licença, esquema, proveniência e contagens antes de atualizar o CSV versionado.
 
+## Consultar o banco no navegador
+
+Na raiz do projeto, depois da carga, execute `uv run python -X utf8`. No prompt Python (`>>>`), execute uma linha por vez:
+
+```python
+import duckdb
+
+con = duckdb.connect()
+con.execute("ATTACH 'demissao_ia.duckdb' AS projeto (READ_ONLY)")
+con.execute("INSTALL ui")
+con.execute("LOAD ui")
+con.execute("CALL start_ui()")
+```
+
+Abra **http://localhost:4213** e mantenha esse terminal aberto. A instalação da extensão e o carregamento da interface precisam de internet. O banco do projeto fica conectado em leitura; a interface usa uma conexão principal em memória. Consulte a [documentação oficial da extensão UI](https://duckdb.org/docs/stable/core_extensions/ui).
+
+**Em cada célula SQL, selecione `projeto` no seletor de banco ao lado de Run.** Uma célula configurada como `memory` não encontra `refined.eventos`, mesmo que o banco apareça na barra lateral. Com `projeto` selecionado, os nove arquivos de `sql/marts/` podem ser executados sem alterações.
+
+Também é possível indicar explicitamente banco, schema e tabela, independentemente do seletor:
+
+```sql
+SELECT count(*) AS total_eventos FROM projeto.refined.eventos;
+-- Esperado nesta cópia: 320
+
+SELECT * FROM projeto.marts.kpis;
+```
+
+Para encerrar a interface, execute `con.close()` e `exit()` no terminal Python. Feche essa conexão antes de reconstruir as camadas, para liberar o arquivo para gravação. As consultas da Olist usam outro banco e outras tabelas; não pertencem a este projeto.
+
 ## Indicadores e SQL de origem
 
 | Pergunta / indicador | SQL | Grão |
@@ -272,6 +301,7 @@ O projeto evoluiu por fonte/ambiente, ingestão, transformação, marts, apresen
 | Sintoma | Como resolver |
 |---|---|
 | Banco ausente | Executar ingestão, transformação e marts, nessa ordem |
+| `schema "refined" does not exist` na interface DuckDB | Selecionar `projeto` no seletor de banco da célula SQL, em vez de `memory`; ou usar nomes completos, como `projeto.refined.eventos` |
 | Mart ausente após atualização do código | Reconstruir com `uv run python -m pipeline.marts` e usar **Atualizar** no app |
 | Dados antigos no dashboard | Reconstruir os marts se necessário; depois usar **Atualizar**, pois os DataFrames são cacheados |
 | Cabeçalho ou campo inválido | Conferir o CSV original e o contrato de 20 colunas; corrigir a origem ou a regra documentada antes de continuar |
