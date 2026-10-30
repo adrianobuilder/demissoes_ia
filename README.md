@@ -97,6 +97,10 @@ uv run streamlit run app.py
 
 Abrir o endereço mostrado pelo Streamlit. Use **Claro / Escuro** no topo para alternar a aparência da página e dos gráficos. A escolha permanece durante os filtros e a atualização de dados na mesma sessão. O padrão é claro.
 
+O menu fica centralizado no cabeçalho, com a marca à esquerda e tema/atualização alinhados à direita. Em tablet, a navegação ocupa uma linha própria; no celular, os três grupos ficam centralizados em linhas separadas. Links, tema e recarga foram conferidos com AppTest e Chrome em 1310, 768 e 390 px.
+
+![Cabeçalho organizado](design/cabecalho-claro.jpg)
+
 O desenho segue o painel financeiro de referência: cabeçalho compacto azul-marinho, quatro cartões principais e três medidas complementares. As cinco faixas são: indicadores; empresas por período; panorama mensal; distribuição/evidências; ocupações/concentração. Abaixo de 950 px, cartões principais passam a duas colunas e os gráficos se empilham. As [decisões visuais](design/visual.md) mostram a composição.
 
 Na seção **Quais empresas mais registraram cortes?**, escolha **Ano dos eventos** e, opcionalmente, **Mês dos eventos**. O primeiro ranking mostra até cinco empresas por número de eventos; o segundo, até cinco por eventos classificados como `explicit` (o empregador citou IA). Empates são ordenados pelo nome. Empresas sem quantidade conhecida de postos continuam incluídas. No registro completo, são 302 eventos, dos quais 27 classificados como `explicit`; em 2025, são 73 e 9, respectivamente.

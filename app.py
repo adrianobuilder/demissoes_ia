@@ -40,32 +40,36 @@ def divisao(numero, titulo, detalhe, ancora):
     )
 
 
-with st.container(key="topbar"):
-    marca, aparencia, recarga = st.columns([4.8, 1.6, 1.1], vertical_alignment="center")
+with st.container(key="topbar"), st.container(key="estrutura_cabecalho"):
+    marca, navegacao, acoes = st.columns(3, vertical_alignment="center")
     with marca:
         st.html("""<div class="masthead"><span class="brand-mark">IA</span>
-<div class="brand-name">TRABALHO &amp; TECNOLOGIA<small>DATA INTELLIGENCE / REGISTRO DE DEMISSÕES</small></div>
-<nav aria-label="Seções do painel"><a href="#empresas">EMPRESAS</a>
-<a href="#evolucao">PANORAMA</a><a href="#distribuicao">DISTRIBUIÇÃO</a></nav></div>""")
-    with aparencia, st.container(key="alternar_tema"):
-        escolhido = st.segmented_control(
-            "Aparência",
-            ["Claro", "Escuro"],
-            default="Claro",
-            required=True,
-            key="tema_visual",
-            label_visibility="collapsed",
-            width="stretch",
-            format_func=lambda valor: f"☀ {valor}" if valor == "Claro" else f"☾ {valor}",
-        )
-    with recarga:
-        if st.button(
-            "Atualizar",
-            icon=":material/refresh:",
-            width="stretch",
-            help="Reler os marts; não baixa outra versão da fonte.",
-        ):
-            carregar.clear()
+<div class="brand-name">TRABALHO &amp; TECNOLOGIA<small>DATA INTELLIGENCE / REGISTRO DE DEMISSÕES</small></div></div>""")
+    with navegacao:
+        st.html("""<nav class="header-nav" aria-label="Seções do painel">
+<a href="#empresas">EMPRESAS</a><a href="#evolucao">PANORAMA</a>
+<a href="#distribuicao">DISTRIBUIÇÃO</a></nav>""")
+    with acoes, st.container(key="acoes_cabecalho"):
+        aparencia, recarga = st.columns([1.65, 1], vertical_alignment="center")
+        with aparencia, st.container(key="alternar_tema"):
+            escolhido = st.segmented_control(
+                "Aparência",
+                ["Claro", "Escuro"],
+                default="Claro",
+                required=True,
+                key="tema_visual",
+                label_visibility="collapsed",
+                width="stretch",
+                format_func=lambda valor: f"☀ {valor}" if valor == "Claro" else f"☾ {valor}",
+            )
+        with recarga:
+            if st.button(
+                "Atualizar",
+                icon=":material/refresh:",
+                width="stretch",
+                help="Reler os marts; não baixa outra versão da fonte.",
+            ):
+                carregar.clear()
 
 tema = "escuro" if escolhido == "Escuro" else "claro"
 st.html(painel.estilos(tema))

@@ -8,6 +8,8 @@ A revisão 3 atende à dificuldade de leitura apontada pelo usuário: antes do p
 
 Cabeçalho azul-marinho compacto, marca, navegação por âncoras e controles de aparência/recarga. Título e snapshot numa faixa curta. Superfícies retangulares, cantos de 4–5 px, bordas discretas, títulos em caixa alta e pouco espaço entre os blocos, como na referência. Sem o grande bloco de apresentação anterior.
 
+O cabeçalho usa três áreas de mesma largura: marca à esquerda, links centralizados e controles à direita, com largura limitada e botões de 36 px. Até 1100 px, marca e controles dividem a primeira linha e o menu fica centralizado abaixo. Até 650 px, são três linhas centralizadas: marca, navegação e controles. Os links continuam visíveis no celular. Ajuste conferido com AppTest (sete cartões, nove gráficos, tema e recarga), Ruff e Chrome em 1310, 768 e 390 px. Capturas: [claro](cabecalho-claro.jpg) e [escuro](cabecalho-escuro.jpg).
+
 ```text
 MARCA / NAVEGAÇÃO                              CLARO · ESCURO / ATUALIZAR
 Título do registro                                      Snapshot da fonte
