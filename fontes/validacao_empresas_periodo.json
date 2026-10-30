@@ -1,0 +1,149 @@
+{
+  "data_verificacao": "2026-10-30",
+  "commit_sql": "d12ee3d",
+  "commit_interface": "5d0c23b7fb5a31d34ccbdded0d7a2e5065589bb9",
+  "testes_unitarios": 52,
+  "arquivos_testes": 6,
+  "cobertura_percentual": 97.85,
+  "instrucoes_medidas": 466,
+  "instrucoes_nao_executadas": 10,
+  "linhas_nao_executadas": {
+    "painel.py": [
+      175,
+      176,
+      177,
+      287,
+      288
+    ],
+    "pipeline/ingestao.py": [
+      81
+    ],
+    "pipeline/marts.py": [
+      98
+    ],
+    "pipeline/transformacao.py": [
+      138,
+      180
+    ],
+    "relatorio.py": [
+      141
+    ]
+  },
+  "ruff_check_e_formatacao": true,
+  "marts": 9,
+  "linhas_novo_mart": 839,
+  "linhas_total_marts": 1241,
+  "reconciliacao_por_nivel": [
+    {
+      "nivel": "ano",
+      "eventos": 302,
+      "ia_empregador": 27
+    },
+    {
+      "nivel": "mes",
+      "eventos": 302,
+      "ia_empregador": 27
+    },
+    {
+      "nivel": "total",
+      "eventos": 302,
+      "ia_empregador": 27
+    }
+  ],
+  "ano_2025": {
+    "eventos": 73,
+    "ia_empregador": 9
+  },
+  "top5_eventos": [
+    [
+      "Chegg",
+      5
+    ],
+    [
+      "Google",
+      5
+    ],
+    [
+      "TikTok",
+      5
+    ],
+    [
+      "Amazon",
+      4
+    ],
+    [
+      "BenchSci",
+      3
+    ]
+  ],
+  "top5_ia_empregador": [
+    [
+      "BenchSci",
+      2
+    ],
+    [
+      "0G Labs",
+      1
+    ],
+    [
+      "Allianz Partners",
+      1
+    ],
+    [
+      "Artlist",
+      1
+    ],
+    [
+      "BigID",
+      1
+    ]
+  ],
+  "criterio_empates": "Contagem decrescente, nome crescente; no maximo cinco empresas em cada grafico.",
+  "app_test": [
+    "Sete cartoes preservados",
+    "Nove graficos",
+    "Ano/mes afetam somente rankings e tabelas de empresas",
+    "Consulta de empresa afeta somente tabelas",
+    "BenchSci/2025: um evento em agosto, com explicit",
+    "Mes sem eventos informa vazio sem erro",
+    "Retorno ao registro completo redefine mes",
+    "Tema apos filtros e recarga",
+    "Filtro mensal anterior independente"
+  ],
+  "chrome_viewports": [
+    {
+      "largura": 1310,
+      "altura": 581
+    },
+    {
+      "largura": 390,
+      "altura": 844
+    }
+  ],
+  "chrome_verificacoes": [
+    "Claro e escuro",
+    "Rankings e contagens legiveis",
+    "Seletores e lista de opcoes no tema escuro",
+    "Consulta real BenchSci/2025 e aba mensal",
+    "Rankings empilhados no celular",
+    "Tabelas com rolagem para linhas e colunas"
+  ],
+  "html_bytes": 125440,
+  "html_limite_bytes": 204800,
+  "html_graficos": 9,
+  "html_faixas": 5,
+  "html_cdn_unico_ids_fixos_e_determinismo_testados": true,
+  "html_visual_local": "Pendente manualmente; file:// bloqueado pela ferramenta na etapa anterior.",
+  "clone_limpo_repetido_nesta_etapa": false,
+  "sha256_csv": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674",
+  "sha256_arquivos": {
+    "sql/marts/09_empresas_periodo.sql": "7e4b8f74eedad07dc98ad599b5fde0680521fd8f1d677ae40d1d604c15285add",
+    "app.py": "e06977269c5fa606eefefcafb2b66f50debdda6e4bf20effcd46f8ec43312d96",
+    "painel.py": "699d7f81673e1739a77890560e1f8138343681d52917bdb40501b69ec7b563c0",
+    "relatorio.py": "2c7d58e9b9be79199ac82f374c073061dc460e75d174c62e531e62ba8847c8f6",
+    "design/painel.css": "1542ddc90553fffcb2254f3d54ab2d491a3da6c76b07a271756d31f74f85e5e1",
+    "design/visual.md": "6abd6501c68acf298800c927c04ea1f154bfcd7aa054220cac1890021c8689d2",
+    "design/empresas-claro.jpg": "6da9d6efeb1a2a6fbcc43158fd857ede7004ad1b2a3375ae26e14f75ff339f6b",
+    "design/empresas-escuro.jpg": "d29009044e3847fe982185ceff50ec34b48d673e5176fd9f1dea454f7ddcdda9"
+  }
+}

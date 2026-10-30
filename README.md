@@ -13,7 +13,7 @@ O CSV recebido acompanha `raw/` sem edição. Para citar um evento, preservar se
 
 ## Perguntas e modelo
 
-O projeto responde como evoluem os cortes por mês, quais empresas têm mais postos contabilizados, como os eventos se distribuem por atribuição, execução e evidência, quais famílias aparecem e como os postos conhecidos se concentram entre empresas.
+O projeto responde quais empresas registram mais eventos de corte em cada ano/mês, em quantos eventos o empregador citou IA, como evoluem os postos conhecidos e como os eventos se distribuem por atribuição, execução, evidência e família ocupacional. Evento de corte é um registro, não uma pessoa demitida.
 
 | Camada / tabela | O que uma linha representa |
 |---|---|
@@ -37,6 +37,7 @@ As duas tabelas refined têm relação de um evento para várias famílias. O in
 - **G — validação automatizada e reprodução:** 42 testes aprovados, cobertura de 98,65%, Ruff aprovado e reconstrução completa em clone limpo. Os testes também passaram com o CSV ocultado e sem banco do projeto. Evidências em [validacao_entrega.json](fontes/validacao_entrega.json). Permanece apenas a conferência visual manual do HTML local, descrita acima.
 - **H — modernização visual:** temas claro e escuro, cartões com ícones, seções e grade adaptável. 44 testes aprovados, cobertura de 97,97%, AppTest e leitura visual no Chrome em 1310 e 390 px. Evidências em [validacao_visual.json](fontes/validacao_visual.json); o registro da etapa G permanece como histórico anterior à modernização.
 - **I — reformulação conforme a referência:** cabeçalho compacto, grade assimétrica, quatro gráficos de barras, uma rosca, uma pizza, curva com área e tabela. 46 testes aprovados e conferência de temas, navegação e celular; [registro da revisão 2](fontes/validacao_design_v2.json). Os registros G e H são históricos.
+- **J — leitura por empresa e período:** novo SQL com 839 linhas por empresa/período, dois rankings por eventos, filtros de ano/mês e consulta por empresa. São nove marts (1.241 linhas), nove gráficos, cinco faixas e 52 testes aprovados; [validação desta etapa](fontes/validacao_empresas_periodo.json). Os registros anteriores permanecem históricos.
 
 ## Preparar o ambiente
 
@@ -84,6 +85,7 @@ Cada etapa substitui seus destinos, sem acumular linhas. Ingestão, transformaç
 | Nível de evidência | [06_evidencias.sql](sql/marts/06_evidencias.sql) | Nível entre cortes |
 | Famílias ocupacionais, usando JOIN | [07_familias_ocupacionais.sql](sql/marts/07_familias_ocupacionais.sql) | Família; eventos distintos e não aditivos |
 | Concentração de postos conhecidos | [08_concentracao_empresas.sql](sql/marts/08_concentracao_empresas.sql) | Empresa; acumulado com desempate |
+| Eventos de corte e IA citada pelo empregador, por ano/mês | [09_empresas_periodo.sql](sql/marts/09_empresas_periodo.sql) | Empresa + nível total/ano/mês + início do período |
 
 Na cópia real, os cartões retornam 302 cortes, 250 empresas, 83.847 postos contabilizados, 278.169 reportados não contabilizados nos cortes, 30,8% de cobertura, mediana 314 e 18 declarações. Esses valores são diagnóstico do snapshot, não expectativas da suíte unitária.
 
@@ -95,9 +97,19 @@ uv run streamlit run app.py
 
 Abrir o endereço mostrado pelo Streamlit. Use **Claro / Escuro** no topo para alternar a aparência da página e dos gráficos. A escolha permanece durante os filtros e a atualização de dados na mesma sessão. O padrão é claro.
 
-O desenho segue o painel financeiro de referência: cabeçalho compacto azul-marinho, navegação por seções, quatro cartões principais e três medidas numa faixa complementar. As quatro faixas são: indicadores; barras mensais e rosca de atribuição; barras de empresas/execução e pizza de evidências; barras de famílias e curva de concentração com tabela de empresas. Abaixo de 950 px, cartões principais passam a duas colunas e os gráficos se empilham. As definições ficam na ajuda dos cartões e em **Metodologia e como interpretar os indicadores**. As [decisões visuais](design/visual.md) mostram a composição e o vínculo entre cada figura e seu mart.
+O desenho segue o painel financeiro de referência: cabeçalho compacto azul-marinho, quatro cartões principais e três medidas complementares. As cinco faixas são: indicadores; empresas por período; panorama mensal; distribuição/evidências; ocupações/concentração. Abaixo de 950 px, cartões principais passam a duas colunas e os gráficos se empilham. As [decisões visuais](design/visual.md) mostram a composição.
 
-O filtro altera apenas o gráfico mensal; cartões e comparações mantêm o snapshot completo. `Atualizar` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados; o botão não baixa outra versão do dataset. As pizzas representam categorias exclusivas; famílias ocupacionais se sobrepõem e continuam em barras. Percentuais arredondados podem somar 100,1%.
+Na seção **Quais empresas mais registraram cortes?**, escolha **Ano dos eventos** e, opcionalmente, **Mês dos eventos**. O primeiro ranking mostra até cinco empresas por número de eventos; o segundo, até cinco por eventos classificados como `explicit` (o empregador citou IA). Empates são ordenados pelo nome. Empresas sem quantidade conhecida de postos continuam incluídas. No registro completo, são 302 eventos, dos quais 27 classificados como `explicit`; em 2025, são 73 e 9, respectivamente.
+
+**Empresa para consultar** altera somente as tabelas, sem mudar o ranking geral do período. A aba **Resumo por empresa** mostra o total do período e as categorias de vínculo com IA. **Mês a mês por empresa** mostra as linhas mensais com eventos registrados. Ausência de linha não permite concluir que não houve demissões fora da base. Os períodos são definidos pela data do evento e incluem anúncios, situações parciais e revertidas, conforme o contrato existente. Os dados de 2026 terminam em outubro.
+
+As contagens e posições são calculadas em `09_empresas_periodo.sql`; a tela apenas seleciona um nível. Nunca somar linhas de total, ano e mês entre si. “Empregador citou IA” não comprova motivo exclusivo nem causalidade independente. Os outros vínculos são exibidos separadamente para não transformar os 302 eventos em alegações de causa confirmada.
+
+`Atualizar` descarta o cache e relê os marts, fechando a conexão antes de renderizar. Reconstruir o pipeline não atualiza automaticamente os DataFrames já cacheados; o botão não baixa outra versão do dataset. As pizzas representam categorias exclusivas; famílias ocupacionais se sobrepõem e continuam em barras. Percentuais arredondados podem somar 100,1%.
+
+O controle da evolução mensal continua independente. Os novos filtros de ano/mês alcançam apenas os dois rankings e as tabelas da seção de empresas; os sete cartões e as seis comparações anteriores mantêm o registro completo.
+
+![Eventos por empresa e vínculo com IA](design/empresas-claro.jpg)
 
 | Claro | Escuro |
 |---|---|
@@ -127,9 +139,9 @@ uv run ruff format --check pipeline painel.py app.py relatorio.py test
 git log --oneline --graph --all
 ```
 
-Resultado após a revisão 2, em 30/10/2026: **46 testes em seis arquivos, 97,62% de cobertura total**, 420 instruções e dez não executadas. A meta é 60%. Quatro linhas ausentes são chamadas sob `if __name__ == '__main__'`; os respectivos `main()` são testados diretamente. Uma é o erro defensivo para associações órfãs; três montam o CSS local, conferido no app; duas adicionam ao hover de barras um percentual opcional que os marts atuais de empresa/família não fornecem. Uma sonda temporária criada na etapa G confirmou que um módulo não importado aparece com 0%; a sonda foi removida e não integra o projeto. `app.py` e a UI opcional ficam fora do percentual; o app teve verificação funcional e visual separada.
+Resultado após a etapa J, em 30/10/2026: **52 testes em seis arquivos, 97,85% de cobertura total**, 466 instruções e dez não executadas. A meta é 60%. Quatro linhas ausentes são chamadas sob `if __name__ == '__main__'`; uma é o erro defensivo para associações órfãs; três montam o CSS local, conferido no app; duas adicionam percentual opcional ao hover de barras. `app.py` fica fora da cobertura de linhas; suas interações e aparência são verificadas separadamente. A medição da etapa G também conferiu a descoberta de módulos não importados com 0%.
 
-O AppTest confirmou os sete valores, os tipos de gráficos previstos, dados e percentuais iguais nos dois temas, tabela presente, alteração só do mensal pelo filtro e manutenção do tema após recarga. O Chrome mostrou a grade, textos, navegação e gráficos nos dois temas; em 390 px, verificou-se o empilhamento, legendas e datas sem sobreposição. Os textos percentuais nas pizzas têm contraste de pelo menos 4,5:1 nas cores atuais. O relatório usa as mesmas figuras e tabela no tema claro, com 72,6 KB; os sete testes do HTML continuam aprovados. Esta revisão não repetiu o clone limpo: a reprodução abaixo registra a etapa G, anterior às mudanças visuais.
+O AppTest confirmou nove gráficos, os sete cartões preservados, seleção de ano/mês, consulta de empresa sem mudar o ranking, período vazio, retorno ao registro completo e tema após recarga. No Chrome, BenchSci/2025 mostrou um evento em agosto com IA citada pelo empregador; claro/escuro e 390 px foram conferidos. O novo SQL reconciliou 302 eventos e 27 `explicit` separadamente em cada nível total/ano/mês. O HTML reutiliza as nove figuras, tem 122,5 KB, IDs fixos/CDN único e sete testes aprovados, inclusive determinismo. Esta etapa não repetiu o clone limpo; a reprodução abaixo pertence à etapa G.
 
 O clone limpo do repositório reproduziu os 42 testes sem o CSV disponível e sem banco de produção. Após restaurar a entrada, os três comandos reconstruíram 320 eventos, 498 associações e oito marts, com 402 linhas no total. Duas gerações reais do HTML mantiveram conteúdo igual, exceto pelo horário previsto; o arquivo tem 69.441 bytes. O SHA-256 do CSV foi conferido na cópia, no objeto Git e no clone. O AppTest também verificou banco ausente: mensagem de orientação, sem criar arquivo ou exibir um painel parcial.
 
@@ -146,6 +158,8 @@ Na apresentação, os testes funcionais não detectaram truncamento dos cartões
 Na modernização, sete cartões lado a lado cortaram um valor no desktop. A grade foi corrigida para quatro e três. Na tela de 390 px, rótulos e datas também ficaram apertados: os ícones decorativos são ocultados nessa largura, os textos podem quebrar sem truncamento e o eixo mensal mostra até quatro datas. Os pontos mensais, as lacunas e os valores foram preservados; o hover continua mostrando cada mês.
 
 O usuário apontou que essa primeira modernização ainda não seguia a referência: mudava sobretudo cores e cartões, mantendo os mesmos tipos de gráficos. A revisão 2 mudou a composição, adotou colunas, rosca, pizza e tabela e preservou as medidas SQL. A inspeção visual também encontrou pouco contraste no botão selecionado e rótulos de execução apertados; o contraste foi corrigido e “Desconhecido” é abreviado só no eixo, com nome completo no hover.
+
+Outra conferência do usuário revelou que “Top 5 empresas” ordenava postos e não respondia quantos eventos cada empresa registrou no período. A etapa J separou esses conceitos, preservou empresas sem postos conhecidos e adicionou o grão empresa/período no SQL. O primeiro teste novo também supôs que a data pudesse ser vazia; a transformação rejeitou esse dado inventado por ser obrigatório. O cenário foi corrigido para respeitar o contrato, sem afrouxar a validação. No navegador, seletores com `None` ainda podiam ficar visualmente vazios ao limpar o período; opções textuais explícitas corrigiram a leitura.
 
 Na primeira execução da etapa C, 4 de 12 testes falharam: o código gerado usou `fetchone()` na contagem e tentou desregistrar o DataFrame com um resultado ainda pendente no DuckDB 2.0. A exceção `ResourceInUseException` mostrou a suposição incorreta de compatibilidade com a versão anterior. A correção passou a consumir todo o resultado com `fetchall()` antes de `unregister`; os 12 testes passaram na repetição, incluindo gravação, reexecução, entrada vazia e rollback. A [documentação da API Python](https://www.duckdb.org/docs/lts/clients/python/dbapi) também descreve a necessidade de concluir o resultado antes de outra operação na conexão.
 

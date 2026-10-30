@@ -18,6 +18,8 @@ Há três estados de informação ao longo do documento:
 
 As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo; a modernização H teve 44 testes e 97,97%. A revisão visual 2 tem 46 testes e 97,62%, AppTest e Chrome em 1310 e 390 px, mudando a composição e os tipos de gráficos conforme a referência. O [README](README.md), os [registros originais](fontes/validacao_entrega.json), a [primeira revisão](fontes/validacao_visual.json) e a [revisão 2](fontes/validacao_design_v2.json) distinguem provas e limitações. A abertura manual do HTML local permanece pendente porque a ferramenta bloqueia `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
 
+A etapa atual J acrescentou empresas por período: nove marts, 1.241 linhas materializadas, nove figuras, cinco faixas, **52 testes e 97,85% de cobertura**. AppTest verificou filtros independentes, consulta, período vazio e recarga; claro/escuro e celular foram conferidos. O [registro da etapa J](fontes/validacao_empresas_periodo.json) distingue esta validação das etapas históricas acima.
+
 ### Requisitos adicionais do desafio final
 
 O projeto deve usar uma fonte que permita uso público, duas tabelas relacionadas por chave e pelo menos um JOIN real nos indicadores; manter três camadas e testes com dados inventados; ser entregue em repositório público pessoal, sem fork do curso, com commits progressivos por etapa. O README deve permitir reproduzir os indicadores do zero e terminar com uma seção sobre erros reais da IA e como foram descobertos. Dashboard é opcional para a faculdade, mas permanece no escopo deste projeto, junto do HTML.
@@ -37,7 +39,7 @@ Manter o desenvolvimento orientado por especificações. Cada etapa precisa decl
 5. Verificar sucesso, erro, reexecução e preservação do estado.
 6. Conferir a apresentação e documentar limitações.
 
-As specs dos módulos ficarão nas respectivas docstrings. A docstring de `painel.py` será a referência compartilhada por `app.py` e `relatorio.py`: sete cartões, sete figuras, quatro faixas e escopo dos filtros. Regras detalhadas de normalização futura podem receber uma spec complementar, sem contradizer este guia.
+As specs dos módulos ficam nas docstrings. `painel.py` é a referência compartilhada por `app.py` e `relatorio.py`: sete cartões, nove figuras, cinco faixas e escopo dos filtros. Os sete gráficos anteriores continuam em `figuras`; os dois rankings por eventos ficam em `figuras_empresas`. Regras novas não devem contradizer este guia.
 
 Testes aprovados demonstram os comportamentos exercitados. Eles não substituem a revisão das definições nem a auditoria das fontes dos eventos.
 
@@ -63,7 +65,7 @@ Esses valores são restrições declaradas, não uma conferência das versões i
 
 | Item | Necessidade |
 |---|---|
-| Plotly | Sete figuras interativas reutilizadas pelo app e pelo HTML |
+| Plotly | Nove figuras interativas reutilizadas pelo app e pelo HTML |
 | pytest-cov / coverage.py | Medição da cobertura total e linhas `Missing` |
 | `kagglehub[pandas-datasets]` | Opcional: aquisição pelo Kaggle; o ZIP local já permite começar |
 
@@ -120,7 +122,7 @@ demissao_ia/
 │   ├── 06_evidencias.sql
 │   ├── 07_familias_ocupacionais.sql
 │   └── 08_concentracao_empresas.sql
-├── painel.py                         # Leitura, formatação e sete figuras
+├── painel.py                         # Leitura, formatação, nove figuras e tabelas
 ├── app.py                            # Composição da página Streamlit
 ├── relatorio.py                      # Geração do HTML com a mesma apresentação
 ├── ui.py                             # Opcional: exploração local do DuckDB
@@ -153,7 +155,7 @@ flowchart LR
     I --> K[relatorio.py / HTML]
 ```
 
-Manter carga em lote com substituição das tabelas, sem incremento automático. `design/rascunho.png` pode documentar um desenho visual se necessário; as quatro faixas descritas neste guia já definem a organização inicial.
+Manter carga em lote com substituição das tabelas, sem incremento automático. A organização visual atual está em `design/visual.md`, com cinco faixas e capturas reais; `design/rascunho.png` continua opcional.
 
 Não transportar `.venv/`, caches, banco ou HTML da Olist. `.gitignore` deverá tratar `.venv/`, `__pycache__/`, `.pytest_cache/`, `.ruff_cache/`, `.coverage`, `htmlcov/`, banco, WAL e HTML gerados. A política de versionamento do CSV dependerá das condições da fonte; se ficar fora do Git, a obtenção precisa estar documentada.
 
@@ -351,9 +353,9 @@ Um refined vazio poderá existir, mas não produzirá um dashboard novo com toda
 
 Cada SQL deverá documentar pergunta, grão, população, colunas, nulos, unidade e ordenação. A regra de uma linha em `kpis` não garante que as outras consultas tenham linhas.
 
-## 11. Os oito marts: perguntas, grão e medidas
+## 11. Os nove marts: perguntas, grão e medidas
 
-São oito perguntas adequadas à fonte. Manter o padrão de arquivos numerados não exige repetir os 12 marts do domínio comercial.
+São nove consultas adequadas à fonte. A nona atende à leitura por empresa/período pedida após a revisão visual. Manter arquivos numerados não exige repetir os 12 marts do domínio comercial.
 
 | Arquivo | Grão e população | Colunas previstas |
 |---|---|---|
@@ -365,6 +367,11 @@ São oito perguntas adequadas à fonte. Manter o padrão de arquivos numerados n
 | `06_evidencias.sql` | Nível de evidência entre cortes | `nivel_evidencia`, `eventos_corte`, `pct_eventos` |
 | `07_familias_ocupacionais.sql` | Família ocupacional entre cortes | `familia_ocupacional`, `eventos_corte` |
 | `08_concentracao_empresas.sql` | Empresa com postos contabilizados | `empresa`, `postos_contabilizados`, `posicao`, `pct_acumulado` |
+| `09_empresas_periodo.sql` | Empresa + nível total/ano/mês + início do período | Contagem de eventos, quatro categorias de atribuição, primeiras/últimas datas, totais do período e duas posições por eventos |
+
+`09_empresas_periodo.sql` inclui todos os `cut`, mesmo sem quantidade conhecida de postos. Materializa total, ano e mês em níveis distintos; não somá-los entre si. Ano/mês usam a data do evento, obrigatória em refined. `ia_empregador` conta apenas `explicit`; `mixed`, `blamed` e classificações ausentes/outras ficam separadas. Rankings usam `row_number` por período, ordenados pela contagem decrescente e pelo nome da empresa. Até cinco empresas são mostradas; a tabela permite consultar as demais, inclusive empatadas. Isso mede registros associados à IA, não prova execução ou causa exclusiva.
+
+Na cópia real, são 839 linhas no novo mart e 1.241 nos nove marts. Cada nível reconciliou separadamente 302 cortes e 27 `explicit`. Em 2025, são 73 cortes e 9 `explicit`. Não transformar esses valores da cópia em expectativas dos testes unitários.
 
 ### Populações que não podem ser confundidas
 
@@ -458,7 +465,7 @@ Conexão curta permite nova escrita entre leituras. Isso não elimina todo confl
 
 Exemplos sintéticos: `12345 -> 12.345` e `25.5 -> 25,5%`. A mediana poderá conter meio posto em um conjunto par; usar `numero(..., casas=1)` quando houver fração, sem arredondá-la para um inteiro silenciosamente. O utilitário `reais` usado na Olist não é necessário nesta fonte: não há valores monetários.
 
-### Sete funções de figuras
+### Sete funções anteriores e dois rankings de eventos
 
 | Ordem / função | Mart | Representação |
 |---|---|---|
@@ -470,6 +477,8 @@ Exemplos sintéticos: `12345 -> 12.345` e `25.5 -> 25,5%`. A mediana poderá con
 | 6. `eventos_por_familia` | `familias_ocupacionais` | Barras de eventos distintos e aviso de sobreposição; nunca pizza |
 | 7. `concentracao_empresas` | `concentracao_empresas` | Curva com área discreta; referência tracejada em 80% |
 
+`ranking_eventos_empresa` e `ranking_ia_empregador` são barras horizontais de até cinco empresas, com valores diretos e eixo em registros. `figuras_empresas` exige exatamente um período; rejeita mistura de níveis, aplica o tema e identifica o período no título. `selecionar_periodo` apenas filtra o nível SQL. `quadro_eventos` e `tabela_eventos_html` selecionam, ordenam e formatam as colunas prontas, sem agregar ou pivotar. As linhas mensais exibem somente meses com eventos registrados. Os nove gráficos são compartilhados pelo app e pelo HTML.
+
 As funções recebem DataFrame, devolvem figura Plotly, não consultam banco e não alteram o DataFrame original. `figuras(dados, tema="claro")` aplica a paleta sem mudar dados, categorias ou percentuais. Azul claro `#235C95`, escuro `#78B4FF`, tons categóricos explícitos nas pizzas e textos com contraste. Alturas: mensal 310 px; atribuição 390; empresa, execução e evidência 355; famílias 455; concentração 265. Até quatro datas no eixo mensal; todos os meses permanecem nos dados. Ausência de quantidade não vira zero. Classificações são traduzidas, preservando os códigos no hover. `tabela_empresas` ordena e formata cinco linhas do mart, escapando o texto, sem agregação. Ver [design/visual.md](design/visual.md).
 
 Nas pizzas, áreas usam contagens exclusivas e rótulos usam `pct_eventos` do SQL. Não recalcular percentuais em pandas. Por arredondamento, a soma dos rótulos pode ser 100,1%; avisar. Não usar pizza para famílias ocupacionais, cujos eventos se sobrepõem.
@@ -478,16 +487,19 @@ Ordenar, recortar por período, selecionar `head(10)` e formatar são operaçõe
 
 ## 14. Dashboard: `app.py`
 
-Página `layout="wide"`, título **Registro de demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os oito marts são lidos uma vez por carregamento via `painel.ler()`. A revisão 2 segue a composição financeira da referência: cabeçalho compacto azul-marinho com âncoras, indicadores, painéis retangulares, seções em caixa alta, diversidade de formas e tabela de consulta. Substitui o cabeçalho grande e a organização anterior.
+Página `layout="wide"`, título **Registro de demissões associadas à IA**, identificação do snapshot e descrições curtas das medidas. Os nove marts são lidos por carregamento via `painel.ler()`. A composição financeira tem cabeçalho compacto, âncoras, indicadores, painéis retangulares e tabelas. A seção de eventos por empresa aparece antes do panorama, para responder diretamente quantos registros cada empresa tem no período e em quantos citou IA.
 
 Seletor **Claro / Escuro** no topo, claro por padrão e persistente durante filtros e recarga na sessão. `painel.estilos(tema)` lê `design/painel.css`; `painel.figuras` aplica a mesma aparência às figuras. `st.plotly_chart(..., theme=None)` respeita as cores; hover disponível e barra de ferramentas oculta para reduzir ruído. Sem novas dependências ou medidas. Quatro cartões principais e três complementares em faixa compacta. Até 950 px, principais em duas colunas e gráficos empilhados; até 650 px, cabeçalho se reorganiza e ícones decorativos dos cartões são ocultados. As três medidas complementares continuam alinhadas.
 
-### Quatro faixas na composição revisada conforme a referência
+### Cinco faixas na composição atual
 
 1. **Sete cartões:** eventos de corte; empresas com cortes; postos contabilizados; postos reportados não contabilizados; cortes com quantidade contabilizada; mediana dos eventos contabilizados; declarações sem corte discreto.
-2. **Duas colunas, proporção 2:1:** evolução mensal em colunas com filtro; atribuição à IA em rosca.
-3. **Três colunas:** barras por empresa; colunas por execução; pizza por evidência.
-4. **Duas colunas, proporção 1,25:1:** barras por família; concentração e tabela das cinco primeiras empresas empilhadas à direita.
+2. **Empresas por período:** guia de leitura; ano/mês/consulta de empresa; rankings de todos os eventos e de `explicit`; abas de resumo e detalhe mensal.
+3. **Duas colunas, proporção 2:1:** evolução mensal de postos em colunas, com filtro próprio; atribuição em rosca.
+4. **Três colunas:** barras de postos por empresa; colunas por execução; pizza por evidência.
+5. **Duas colunas, proporção 1,25:1:** barras por família; concentração e tabela top 5 por postos à direita.
+
+Os seletores da seção de empresas têm opções textuais explícitas para registro completo, todos os meses e todas as empresas. Ano/mês alteram apenas os dois rankings e suas tabelas; consulta de empresa altera só as tabelas, preservando o ranking geral. O mês depende da escolha de um ano. Um mês sem eventos mostra mensagem e gráficos vazios, sem erro e sem inventar empresas com zero. As tabelas têm rolagem para acomodar todas as empresas e a consulta mensal em telas pequenas.
 
 Ajuda dos cartões e legendas deverão explicitar populações, desconhecidos e que postos contabilizados não significam necessariamente cortes já executados. A mediana considera apenas cortes com valor conhecido; a cobertura torna visível essa limitação.
 
@@ -505,17 +517,17 @@ Não criar gráficos principais de país ou setor no primeiro escopo: esses camp
 
 ## 15. Relatório: `relatorio.py` -> `relatorio.html`
 
-Executável na raiz com `uv run python relatorio.py`. Usará `painel.ler()`, `numero`, `pct`, `mes_ano` e as mesmas sete funções de figuras. Não importará `streamlit` nem `app.py`, nem criará um gráfico exclusivo.
+Executável na raiz com `uv run python relatorio.py`. Usa `painel.ler()`, formatadores e as nove funções de figuras compartilhadas. Não importa `streamlit` nem `app.py`, nem cria gráfico exclusivo. A nova seção usa o nível total do registro e tabela completa de empresas, sem filtros interativos.
 
 Contrato da entrega:
 
 - Um arquivo `relatorio.html` na raiz, `lang="pt-BR"`, UTF-8 e CSS embutido.
-- Sete cartões em HTML simples, numa grade; mesmas definições, valores e quatro faixas do app, na mesma ordem.
+- Sete cartões em HTML simples, nove figuras e cinco faixas na mesma ordem do app. IDs fixos `g01` a `g09`; os rankings de eventos vêm primeiro.
 - Figura mensal sem filtro, no período padrão completo; o título explicitará o intervalo.
 - As demais medidas usarão o snapshot inteiro, com o mesmo aviso de escopo.
 - Cada figura será exportada com `to_html(full_html=False, ...)`.
 - Apenas a primeira usará `include_plotlyjs="cdn"`; as outras usarão `False`.
-- `div_id` fixos `g01` a `g07`, na ordem de apresentação. Eles não são os números dos marts.
+- `div_id` fixos `g01` a `g09`, na ordem de apresentação. Eles não são os números dos marts.
 - Escapar textos e metadados inseridos no HTML. Não incluir um horário variável dentro de cada figura.
 - Rodapé com **`Dados de DD/MM/AAAA HH:MM`**, horário de geração em `America/Sao_Paulo`; por exemplo, `Dados de 30/10/2026 14:03`.
 - Informar também **Snapshot da fonte: 23/10/2026 · metodologia v1.36**, a partir da proveniência. Data de geração e data de referência são informações diferentes.
@@ -562,9 +574,9 @@ Manter **uma pasta `test/` e seis arquivos**, um por módulo testável. A quanti
 | `test_db.py` | Caminhos, schema, substituição, identificadores e desregistro após erro |
 | `test_ingestao.py` | Texto, vazios, token `NA`, arquivo/coluna ausente, cabeçalho duplicado, UTF-8, reexecução, vazio e rollback |
 | `test_transformacao.py` | 20 colunas, tipos, datas/inteiros inválidos, BOOLEAN estrito, obrigatórios, nulos, raw preservada, duplicata integral, conflito de ID e atomicidade |
-| `test_marts.py` | Prefixos, colisões, remoção, dependências, vazio, SQL inválido, rollback e fórmulas dos oito SQLs |
-| `test_painel.py` | Formatadores, leitura curta, ausências, identificadores, sete figuras, top 10, ordenação, lacunas e fronteira sem agregações |
-| `test_relatorio.py` | Caminho temporário, sete cartões, quatro faixas, mesmas funções, IDs, CDN único, período, proveniência, rodapé, determinismo, tamanho e stdout |
+| `test_marts.py` | Executor, rollback e nove SQLs; períodos/atribuições distintos, empresa sem postos, anos e desempates |
+| `test_painel.py` | Formatação, leitura curta, nove figuras, períodos, rankings distintos, quadros mensais, escape, vazios, temas e ausência de agregações |
+| `test_relatorio.py` | Sete cartões, nove figuras, cinco faixas, funções compartilhadas, IDs, CDN, período, rodapé, determinismo, tamanho e stdout |
 
 ### Exemplo sintético central
 
@@ -603,7 +615,7 @@ Manter o limite de **60% total de linhas**, não por arquivo. `app.py` e `ui.py`
 
 O pacote `pipeline/` terá `__init__.py`, permitindo descobrir módulos não importados na medição. Conferir no relatório que todos os módulos previstos aparecem, inclusive como 0% quando não exercitados. Se optar futuramente por namespace package, revisar a descoberta e `include_namespace_packages`, além das exclusões.
 
-Examinar `Missing` e justificar linhas não exercitadas. Após a revisão 2, são **97,62% e 46 testes**: dez linhas ausentes, sendo quatro chamadas de entrada, erro defensivo para associações órfãs, três linhas de montagem do CSS conferidas no app e duas para percentual opcional no hover de barras, sem essa coluna nos marts atuais de empresa/família. A etapa G teve 98,65%/42 testes e a H 97,97%/44, registradas separadamente. Cobertura não prova qualidade visual nem substitui conferir valores, populações e rollback. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
+Examinar `Missing` e justificar linhas não exercitadas. Após a etapa J, são **97,85% e 52 testes**, 466 instruções e dez linhas ausentes: quatro chamadas de entrada, erro defensivo para associações órfãs, três linhas de CSS conferidas no app e duas para percentual opcional no hover de barras. As etapas G/H/I tiveram resultados históricos próprios. Cobertura não prova qualidade visual nem substitui conferir valores, populações, períodos e rollback. Não transportar os 98,17% históricos da Olist como resultado desta entrega.
 
 Verificar a independência da suíte rodando-a sem uma carga real prévia. Os testes devem continuar aprovados em um checkout sem banco e sem o CSV de produção.
 
@@ -701,7 +713,7 @@ Não fazem parte do escopo inicial: download automático a cada carga, índice e
 | Modelagem | Grãos explícitos e proteção contra multiplicação | Duas tabelas físicas, eventos e evento_familia, com JOIN real no mart 07 |
 | SQL | Arquivos `NN_nome.sql`, executor transacional | Oito marts e populações separadas |
 | Indicadores | Fórmulas no banco e formatadores brasileiros | Eventos, empresas e postos; sem moeda ou métricas comerciais |
-| Painel | Sete cartões, sete figuras e quatro faixas | Novo conteúdo e período completo de cortes |
+| Painel | Sete cartões, nove figuras e cinco faixas | Rankings por eventos e período, além das análises de postos |
 | App | Cache de dados, leitura curta, recarga e filtro mensal | Aviso de que cartões e outras figuras usam o snapshot inteiro |
 | HTML | Mesmas funções, CDN único, IDs fixos, timestamp e limite | Novo título, metadados da fonte e ausência de filtro |
 | Testes | Seis arquivos, DuckDB temporário e dados inventados | Casos de cortes/declarações, ausentes e sobreposição de famílias |
@@ -730,11 +742,11 @@ Implementar as 20 conversões, obrigatórios, domínios, staging, duplicatas e c
 
 ### Etapa E — perguntas em SQL
 
-Criar os oito marts e seu executor. Validar cada fórmula com dados pequenos, incluindo os dois campos de postos, calendário, famílias e Pareto. Só depois conferir os resultados sobre a cópia real.
+Manter nove marts e seu executor. Validar cada fórmula com dados pequenos, incluindo postos, calendário, famílias, Pareto e empresa/período/atribuição. Só depois conferir a cópia real.
 
 ### Etapa F — apresentação compartilhada
 
-Criar `painel.py`, `app.py` e `relatorio.py`. Validar o mesmo conteúdo nas quatro faixas, o filtro restrito ao mensal, as definições dos cartões e a identificação do snapshot.
+Manter `painel.py`, `app.py` e `relatorio.py`. Validar cinco faixas, nove figuras e escopos separados dos filtros mensal e de empresas, além dos cartões e da identificação do snapshot.
 
 ### Etapa G — verificação e entrega
 
@@ -916,7 +928,7 @@ As caixas abaixo registram as verificações efetivamente realizadas. A única p
 - [x] `painel.py` sem Streamlit, agregações de negócio ou mutação da entrada.
 - [x] Leitura curta read-only, identificadores validados e marts ausentes claros.
 - [x] Formatação brasileira, ausentes “—” e unidades sem moeda.
-- [x] Sete cartões, sete funções e quatro faixas iguais nas duas saídas.
+- [x] Sete cartões, nove funções de gráficos e cinco faixas nas duas saídas.
 - [x] Filtro afeta só mensal; período padrão e aviso de escopo visíveis.
 - [x] Cache de dados e recarga conferidos, sem conexão persistente.
 - [x] HTML com CDN único, IDs fixos, escape e timestamp controlável.
