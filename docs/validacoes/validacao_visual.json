@@ -65,7 +65,7 @@
   "html_testes_determinismo": true,
   "html_visual_local": "Verificacao manual pendente; file:// bloqueado pela politica da ferramenta na etapa anterior.",
   "clone_limpo_repetido_nesta_revisao": false,
-  "registro_clone_anterior": "fontes/validacao_entrega.json",
+  "registro_clone_anterior": "docs/validacoes/validacao_entrega.json",
   "sha256_arquivos": {
     "app.py": "f910cd4df15541babf52e71b7f345f830fe13fc32f2118ee70acf0dcb064f855",
     "painel.py": "9f866d63a71ffed327db64742e1d8234220f07a2798137e77cd3bbc31984893e",

@@ -74,7 +74,7 @@ def executar():
                 except (OSError, ValueError, duckdb.Error) as exc:
                     raise ValueError(f"{arquivo.name}: {exc}") from exc
             con.execute("COMMIT")
-        except Exception:
+        except OSError, ValueError, duckdb.Error:
             con.execute("ROLLBACK")
             raise
     finally:

@@ -4,6 +4,7 @@ import io
 from contextlib import redirect_stdout
 from datetime import date
 
+import duckdb
 import pandas as pd
 import pytest
 
@@ -147,6 +148,39 @@ def test_rollback_depois_de_substituir_eventos(tmp_path, monkeypatch):
     with db.conectar() as con:
         assert con.execute("SELECT empresa FROM refined.eventos").fetchall() == [("Alfa",)]
         assert con.execute("SELECT count(*) FROM refined.evento_familia").fetchall() == [(2,)]
+
+
+@pytest.mark.parametrize(
+    ("erro", "erro_esperado"),
+    [
+        (ValueError, SystemExit),
+        (duckdb.InvalidInputException, SystemExit),
+        (RuntimeError, RuntimeError),
+    ],
+)
+def test_falha_no_resumo_reverte_ambas_as_tabelas(tmp_path, monkeypatch, erro, erro_esperado):
+    preparar_raw(tmp_path, monkeypatch, [evento()])
+    transformacao.executar()
+    preparar_raw(tmp_path, monkeypatch, [evento(Company="Novo", **{"Job families": "Vendas"})])
+
+    def falhar_no_resumo(con, entrada):
+        # As duas escritas ocorreram; nenhuma pode persistir antes do commit.
+        assert con.execute("SELECT empresa FROM refined.eventos").fetchall() == [("Novo",)]
+        assert con.execute("SELECT * FROM refined.evento_familia").fetchall() == [("E1", "Vendas")]
+        raise erro("falha após materializar as duas tabelas")
+
+    monkeypatch.setattr(transformacao, "_resumir", falhar_no_resumo)
+    saida = io.StringIO()
+    with redirect_stdout(saida), pytest.raises(erro_esperado, match="falha após materializar"):
+        transformacao.main()
+    assert saida.getvalue() == ""
+    with db.conectar() as con:
+        assert con.execute("SELECT empresa FROM refined.eventos").fetchall() == [("Alfa",)]
+        assert con.execute("SELECT * FROM refined.evento_familia ORDER BY 2").fetchall() == [
+            ("E1", "Engenharia"),
+            ("E1", "Operações"),
+        ]
+        assert con.execute('SELECT "Company" FROM raw.eventos').fetchall() == [("Novo",)]
 
 
 def test_vazio_mantem_tipos_e_contagens_zero(tmp_path, monkeypatch):

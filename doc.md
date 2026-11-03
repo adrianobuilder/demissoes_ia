@@ -16,9 +16,11 @@ Há três estados de informação ao longo do documento:
 - **Estrutura prevista:** contrato e organização a implementar no novo projeto.
 - **Opcional:** ferramenta ou extensão que só entra se houver necessidade.
 
-As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo; a modernização H teve 44 testes e 97,97%. A revisão visual 2 tem 46 testes e 97,62%, AppTest e Chrome em 1310 e 390 px, mudando a composição e os tipos de gráficos conforme a referência. O [README](README.md), os [registros originais](fontes/validacao_entrega.json), a [primeira revisão](fontes/validacao_visual.json) e a [revisão 2](fontes/validacao_design_v2.json) distinguem provas e limitações. A abertura manual do HTML local permanece pendente porque a ferramenta bloqueia `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
+As etapas de ambiente, pipeline, SQL, painel e relatório foram implementadas e enviadas progressivamente ao GitHub. A etapa G teve 42 testes e 98,65% de cobertura, com reprodução em clone limpo; a modernização H teve 44 testes e 97,97%. A revisão visual 2 tem 46 testes e 97,62%, AppTest e Chrome em 1310 e 390 px, mudando a composição e os tipos de gráficos conforme a referência. O [README](README.md), os [registros originais](docs/validacoes/validacao_entrega.json), a [primeira revisão](docs/validacoes/validacao_visual.json) e a [revisão 2](docs/validacoes/validacao_design_v2.json) distinguem provas e limitações. A abertura manual do HTML local permanece pendente porque a ferramenta bloqueia `file://`. Os contratos abaixo continuam sendo a referência para manutenção.
 
-A etapa atual J acrescentou empresas por período: nove marts, 1.241 linhas materializadas, nove figuras, cinco faixas, **52 testes e 97,85% de cobertura**. AppTest verificou filtros independentes, consulta, período vazio e recarga; claro/escuro e celular foram conferidos. O [registro da etapa J](fontes/validacao_empresas_periodo.json) distingue esta validação das etapas históricas acima.
+A etapa J acrescentou empresas por período: nove marts, 1.241 linhas materializadas, nove figuras, cinco faixas, **52 testes e 97,85% de cobertura**. AppTest verificou filtros independentes, consulta, período vazio e recarga; claro/escuro e celular foram conferidos. O [registro da etapa J](docs/validacoes/validacao_empresas_periodo.json) distingue esta validação das etapas históricas acima.
+
+A revisão de 03/11/2026 moveu diagnósticos e validações para `docs/`, separou as etapas da transformação e substituiu os três `except Exception` por tipos de erro específicos. O [README](README.md#atribuição-à-ia-e-confiabilidade) detalha a atribuição à IA e seus limites. A verificação atual tem **55 testes e 97,89% de cobertura**, com Ruff aprovado e reprodução da carga e do relatório em diretório temporário.
 
 ### Requisitos adicionais do desafio final
 
@@ -104,9 +106,11 @@ demissao_ia/
 ├── fontes/
 │   ├── README_dataset.md             # README preservado do ZIP
 │   ├── LICENSE_dataset.txt           # Licença preservada do ZIP
-│   ├── proveniencia.json             # Snapshot, metodologia, hash e obtenção
+│   └── proveniencia.json             # Snapshot, metodologia, hash e obtenção
+├── docs/
 │   ├── perfil_fonte.json             # Diagnóstico da cópia, fora dos testes
-│   └── validacao_entrega.json        # Evidências da reprodução e limitações
+│   └── validacoes/
+│       └── validacao_*.json          # Evidências históricas da reprodução e limitações
 ├── pipeline/
 │   ├── __init__.py                    # Pacote explícito
 │   ├── db.py                          # Caminhos, conexão, schemas e gravação

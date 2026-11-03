@@ -60,7 +60,7 @@ def executar() -> int:
             db.criar_schema(con, "raw")
             linhas = db.gravar(con, "raw", "eventos", dados)
             con.execute("COMMIT")
-        except Exception:
+        except ValueError, duckdb.Error:
             con.execute("ROLLBACK")
             raise
     finally:

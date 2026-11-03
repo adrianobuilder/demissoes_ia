@@ -2,15 +2,16 @@
 
 Pipeline acadêmico de engenharia de dados que transforma um CSV do Kaggle em indicadores SQL, dashboard e relatório HTML. O objetivo é entender **quais empresas registram mais eventos de corte em cada período, quais vínculos com IA foram informados e quantos postos têm quantidade conhecida**.
 
-Um evento de corte é um registro, não uma pessoa demitida. A associação com IA segue a classificação da fonte e não comprova causa exclusiva. IA é o tema dos dados e apoiou o desenvolvimento; o pipeline é executado com Python e SQL.
+Um evento de corte é um registro, não uma pessoa demitida. A associação com IA segue a classificação da fonte e não comprova causa exclusiva. A seção [Atribuição à IA e confiabilidade](#atribuição-à-ia-e-confiabilidade) explica os critérios e seus limites. IA é o tema dos dados e apoiou o desenvolvimento; o pipeline é executado com Python e SQL.
 
-**Estado atual:** três camadas, duas tabelas relacionadas em refined, nove marts, sete cartões, nove gráficos, temas claro/escuro e relatório reproduzível. **52 testes aprovados; 97,85% de cobertura.**
+**Estado atual:** três camadas, duas tabelas relacionadas em refined, nove marts, sete cartões, nove gráficos, temas claro/escuro e relatório reproduzível. **55 testes aprovados; 97,89% de cobertura** na revisão de 03/11/2026.
 
 ![Dashboard no tema claro](design/painel-claro.jpg)
 
 ## Navegação
 
 - [Fonte e licenças](#fonte-e-licenças)
+- [Atribuição à IA e confiabilidade](#atribuição-à-ia-e-confiabilidade)
 - [Linguagens, bibliotecas e ferramentas](#linguagens-bibliotecas-e-ferramentas)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Arquitetura e regras dos dados](#arquitetura-e-regras-dos-dados)
@@ -35,13 +36,41 @@ Um evento de corte é um registro, não uma pessoa demitida. A associação com 
 | Metodologia | 1.36; não é a versão numérica do Kaggle |
 | Eventos da cópia | 320: 302 cortes e 18 declarações sem corte discreto |
 | Intervalo dos eventos | 22/02/2023 a 22/10/2026 |
-| Proveniência | [Metadados e SHA-256](fontes/proveniencia.json), [perfil dos dados](fontes/perfil_fonte.json) |
+| Proveniência | [Metadados e SHA-256](fontes/proveniencia.json), [perfil dos dados](docs/perfil_fonte.json) |
 
 O CSV acompanha o repositório sem edição. A [licença recebida do dataset](fontes/LICENSE_dataset.txt), **AI Layoffs Index and Register: Data License**, permite redistribuição e análises com atribuição ao publicador e às fontes dos eventos. Preservar os termos, a data e a metodologia; não rotular essa licença como Creative Commons. Consulte também o [README original](fontes/README_dataset.md) e a [página da licença](https://ailayoffs.org/license).
 
 Esta análise é independente e não implica endosso do publicador. As URLs dos eventos identificam suas fontes; a licença do registro não autoriza redistribuir os artigos de terceiros.
 
 **Licença do código:** ainda não há um arquivo `LICENSE` próprio para o código. A escolha e inclusão dessa licença permanecem pendentes; a licença acima documenta o dataset.
+
+## Atribuição à IA e confiabilidade
+
+**Quem atribui:** o publicador AI Layoffs Index classifica os eventos a partir de documentos das empresas e reportagens. Este projeto importa a coluna `Attribution` do CSV para `refined.eventos.atribuicao_ia`, valida os rótulos permitidos e preserva a classificação recebida. Não usa um modelo de IA, palavras-chave ou inferência própria para decidir se uma demissão foi causada por IA. Os critérios abaixo vêm do [dicionário e método da cópia recebida, versão 1.36](fontes/README_dataset.md#method-in-brief).
+
+| Categoria da fonte | Critério de atribuição | O que permite afirmar |
+|---|---|---|
+| `explicit` | O próprio empregador aponta IA como causa do corte. | Há uma declaração do empregador vinculando o corte à IA; isso não demonstra que IA foi a única causa. |
+| `mixed` | O empregador cita IA entre outros fatores, como eficiência ou reestruturação. | Há uma associação declarada, sem determinar quantos postos decorrem especificamente da IA. |
+| `blamed` | Outra fonte atribui o corte à IA, mas o empregador não faz essa atribuição ou nega o vínculo. | Há uma alegação externa registrada; não há confirmação do empregador. A quantidade não entra em `Roles counted`. |
+
+**Quando uma quantidade é contabilizada:** segundo o publicador, o empregador precisa vincular o corte à IA (`explicit` ou `mixed`) e colocar a quantidade em registro público, como documento, comunicado, fala de executivo identificado ou porta-voz. Intervalos usam o limite inferior; percentuais exigem uma base de funcionários publicada pelo empregador; um quadro planejado antes/depois permite calcular a diferença. Uma negativa de que IA motivou o corte impede a contagem, mesmo com declarações conflitantes. Números apenas reportados, tetos de “até”, redução por saída voluntária e quantidades que incluem postos transferidos ficam de fora, com justificativa em `Why not counted`.
+
+O pipeline preserva as quantidades e justificativas do CSV; não recalcula nem audita esses critérios nas fontes dos eventos. Estar em `explicit` ou `mixed` não garante que exista uma quantidade contabilizada. `Roles reported (not counted)` fica separado de `Roles counted`, e `Execution` informa se o corte foi anunciado, executado, parcial, revertido ou tem situação desconhecida. Uma quantidade contabilizada pode corresponder a um anúncio ainda não executado.
+
+**Qual é a força da evidência:** `Evidence tier`, preservado em `nivel_evidencia`, descreve a origem do suporte à atribuição, separadamente da categoria acima:
+
+| Nível | Suporte informado pela fonte | Limite de interpretação |
+|---|---|---|
+| `Tier 1` | Documento primário ou declaração da própria empresa. | Permite verificar o que a empresa declarou; a declaração não comprova causalidade por si só. |
+| `Tier 2` | Reportagem identificada e considerada confiável pelo publicador. | Depende da apuração e da interpretação dessa reportagem. |
+| `Tier 3` | Sinal mais fraco ou de uma única fonte. | Exige maior cautela e conferência do material citado. |
+
+**Não há uma taxa de acerto ou probabilidade de causalidade medida neste projeto.** Não houve auditoria independente de todos os artigos nem comparação com uma base de referência para medir erros de classificação. Os níveis são qualitativos, não percentuais de confiança. Testes e cobertura verificam o processamento dos dados, não a veracidade das alegações. O registro também depende do que foi divulgado e encontrado pelo publicador; não representa todas as demissões nem permite estimar o efeito causal da IA no emprego.
+
+**Como ler os resultados desta cópia:** entre os **302 cortes**, há **27 `explicit`, 193 `mixed` e 82 `blamed`**; os 18 registros `workforce statement` ficam fora dessa população. Os níveis de evidência entre cortes são 134 `Tier 1`, 143 `Tier 2` e 25 `Tier 3`. O [mart de atribuição](sql/marts/04_atribuicao_ia.sql) inclui as três categorias como eventos registrados, enquanto o ranking **Empregador citou IA** do [mart por período](sql/marts/09_empresas_periodo.sql) usa apenas `explicit`. Embora `mixed` também cite IA, ele aparece separadamente como IA entre fatores. Assim, o total de 302 não significa 302 cortes confirmados pelo empregador como causados por IA, e os 83.847 postos contabilizados não medem postos comprovadamente substituídos por IA.
+
+Para conferir um caso, consulte `fonte_url`, `descricao_evento`, `posicao_empregador`, `motivo_nao_contabilizado`, `nivel_evidencia` e `situacao_execucao` em `refined.eventos`, identificando-o por `evento_id`. Esses campos permitem rastrear a alegação até a fonte citada.
 
 ## Linguagens, bibliotecas e ferramentas
 
@@ -105,9 +134,11 @@ demissoes_ia/
 ├── fontes/
 │   ├── README_dataset.md            # Documentação original da fonte
 │   ├── LICENSE_dataset.txt          # Licença do dataset
-│   ├── proveniencia.json            # Snapshot, metodologia e hash
-│   ├── perfil_fonte.json            # Diagnóstico inicial
-│   └── validacao_*.json              # Evidências de cada etapa
+│   └── proveniencia.json            # Snapshot, metodologia e hash usados pelo painel
+├── docs/
+│   ├── perfil_fonte.json            # Diagnóstico inicial da cópia
+│   └── validacoes/                  # Evidências históricas do processo de entrega
+│       └── validacao_*.json
 └── design/
     ├── visual.md                    # Decisões de composição e responsividade
     ├── painel.css                   # Estilos e temas
@@ -115,6 +146,8 @@ demissoes_ia/
 ```
 
 Arquivos **gerados e não versionados**: `.venv/`, `demissao_ia.duckdb`, `relatorio.html`, `.coverage` e caches. O nome da pasta local pode variar; os caminhos dos dados são definidos em [pipeline/db.py](pipeline/db.py) a partir da raiz do projeto. As specs dos módulos ficam em suas docstrings; [doc.md](doc.md) reúne as decisões e contratos completos.
+
+`fontes/` reúne a documentação, a licença e a proveniência do dataset. Diagnósticos e registros de validação ficam em `docs/`; são evidências do processo e não são entradas do pipeline, do painel ou do relatório.
 
 ## Arquitetura e regras dos dados
 
@@ -274,11 +307,13 @@ uv run ruff format --check pipeline painel.py app.py relatorio.py test
 | `test_painel.py` | Formatação, leitura curta, figuras, temas, filtros, tabelas, escape e ausência de agregações |
 | `test_relatorio.py` | Reutilização das nove figuras, cartões, faixas, IDs, CDN, tamanho, escape e determinismo |
 
-Em **30/10/2026**, os comandos acima e a sequência completa de carga foram reproduzidos em clone limpo do commit `89a8dd0`, sem banco anterior: **52 testes aprovados, cobertura total de 97,85% e Ruff aprovado**. A carga produziu 320 registros raw, 320 eventos refined, 498 associações e nove marts/1.241 linhas. O HTML gerado tem 125.440 bytes (122,5 KB). Evidências em [validacao_readme.json](fontes/validacao_readme.json).
+Em **30/10/2026**, os comandos acima e a sequência completa de carga foram reproduzidos em clone limpo do commit `89a8dd0`, sem banco anterior: **52 testes aprovados, cobertura total de 97,85% e Ruff aprovado**. A carga produziu 320 registros raw, 320 eventos refined, 498 associações e nove marts/1.241 linhas. O HTML gerado tem 125.440 bytes (122,5 KB). Evidências em [validacao_readme.json](docs/validacoes/validacao_readme.json).
 
-A meta de cobertura é 60% total. Das 466 instruções medidas, dez não foram executadas: quatro chamadas de entrada, um erro defensivo para associações órfãs, três linhas que montam o CSS local e duas para percentual opcional no hover de barras. `app.py` fica fora desse percentual; AppTest e conferência visual verificam a interface separadamente. Não há workflow de integração contínua versionado; as verificações atuais são executadas por esses comandos.
+Em **03/11/2026**, a revisão dos apontamentos separou a transformação em validação da entrada, staging, materialização e resumo, mantendo uma transação para as duas tabelas refined. As três capturas genéricas do pipeline foram substituídas por tipos de erro de validação, banco e, nos marts, leitura de arquivos. A suíte passou com **55 testes e 97,89% de cobertura**, incluindo três casos de falha após materializar as duas tabelas: erro de validação, erro DuckDB e erro inesperado que deve propagar e descartar as alterações ao fechar a conexão. Ruff e formatação passaram. A carga completa e o relatório foram reproduzidos em diretório temporário, com as mesmas contagens, nove figuras e SHA-256 do CSV preservado; essa execução não foi uma nova validação visual.
 
-AppTest e Chrome também verificaram sete cartões/nove gráficos, temas, recarga, filtros independentes, mês vazio e consulta de empresa. O cabeçalho foi conferido em 1310, 768 e 390 px. [Validação de empresas/período](fontes/validacao_empresas_periodo.json), [revisão visual anterior](fontes/validacao_design_v2.json) e [validação inicial](fontes/validacao_entrega.json) preservam o histórico das respectivas etapas; seus hashes e contagens não são apresentados como medições novas.
+A meta de cobertura é 60% total. Na revisão de 03/11, das 475 instruções medidas, dez não foram executadas: quatro chamadas de entrada, um erro defensivo para associações órfãs, três linhas que montam o CSS local e duas para percentual opcional no hover de barras. `app.py` fica fora desse percentual; AppTest e conferência visual verificam a interface separadamente. Não há workflow de integração contínua versionado; as verificações atuais são executadas por esses comandos.
+
+AppTest e Chrome também verificaram sete cartões/nove gráficos, temas, recarga, filtros independentes, mês vazio e consulta de empresa. O cabeçalho foi conferido em 1310, 768 e 390 px. [Validação de empresas/período](docs/validacoes/validacao_empresas_periodo.json), [revisão visual anterior](docs/validacoes/validacao_design_v2.json) e [validação inicial](docs/validacoes/validacao_entrega.json) preservam o histórico das respectivas etapas; seus hashes e contagens não são apresentados como medições novas.
 
 ## Requisitos da entrega acadêmica
 

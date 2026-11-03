@@ -97,64 +97,57 @@ def _validar_staging(con):
         raise ValueError(f"Conflito de evento_id: {conflitos}")
 
 
-def executar() -> dict:
-    if not db.BANCO.is_file():
-        raise FileNotFoundError(f"Banco ausente: {db.BANCO}; execute pipeline.ingestao")
-    con = db.conectar()
-    try:
-        existe = con.execute(
-            "SELECT table_name FROM information_schema.tables "
-            "WHERE table_schema = 'raw' AND table_name = 'eventos'"
-        ).fetchall()
-        if not existe:
-            raise ValueError("raw.eventos ausente; execute pipeline.ingestao")
-        con.execute("BEGIN")
-        try:
-            expressoes = _expressoes(con)
-            con.execute(
-                "CREATE TEMP TABLE _staging_eventos AS SELECT "
-                + ", ".join(expressoes)
-                + " FROM raw.eventos"
-            )
-            _validar_staging(con)
-            entrada = con.execute("SELECT count(*) FROM _staging_eventos").fetchall()[0][0]
-            db.criar_schema(con, "refined")
-            con.execute(
-                "CREATE OR REPLACE TABLE refined.eventos AS SELECT DISTINCT * FROM _staging_eventos"
-            )
-            con.execute("""
-                CREATE OR REPLACE TABLE refined.evento_familia AS
-                SELECT DISTINCT evento_id, trim(familia) AS familia_ocupacional
-                FROM refined.eventos,
-                     UNNEST(string_split(familias_ocupacionais, '; ')) AS partes(familia)
-                WHERE trim(familia) <> ''
-            """)
-            orfaos = con.execute("""
-                SELECT count(*) FROM refined.evento_familia AS f
-                LEFT JOIN refined.eventos AS e ON e.evento_id = f.evento_id
-                WHERE e.evento_id IS NULL
-            """).fetchall()[0][0]
-            if orfaos:
-                raise ValueError(f"Associações sem evento: {orfaos}")
-            eventos = con.execute("SELECT count(*) FROM refined.eventos").fetchall()[0][0]
-            associacoes = con.execute("SELECT count(*) FROM refined.evento_familia").fetchall()[0][
-                0
-            ]
-            consultas = [
-                f"count(*) FILTER (WHERE {db.identificador(destino)} IS NULL)"
-                for _, destino, _ in COLUNAS
-            ]
-            contagens = con.execute(
-                "SELECT " + ", ".join(consultas) + " FROM refined.eventos"
-            ).fetchall()[0]
-            nulos = dict(zip((destino for _, destino, _ in COLUNAS), contagens, strict=True))
-            con.execute("DROP TABLE _staging_eventos")
-            con.execute("COMMIT")
-        except Exception:
-            con.execute("ROLLBACK")
-            raise
-    finally:
-        con.close()
+def _validar_raw(con):
+    existe = con.execute(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_schema = 'raw' AND table_name = 'eventos'"
+    ).fetchall()
+    if not existe:
+        raise ValueError("raw.eventos ausente; execute pipeline.ingestao")
+
+
+def _preparar_staging(con) -> int:
+    expressoes = _expressoes(con)
+    con.execute(
+        "CREATE TEMP TABLE _staging_eventos AS SELECT "
+        + ", ".join(expressoes)
+        + " FROM raw.eventos"
+    )
+    _validar_staging(con)
+    return con.execute("SELECT count(*) FROM _staging_eventos").fetchall()[0][0]
+
+
+def _materializar_refined(con):
+    db.criar_schema(con, "refined")
+    con.execute(
+        "CREATE OR REPLACE TABLE refined.eventos AS SELECT DISTINCT * FROM _staging_eventos"
+    )
+    con.execute("""
+        CREATE OR REPLACE TABLE refined.evento_familia AS
+        SELECT DISTINCT evento_id, trim(familia) AS familia_ocupacional
+        FROM refined.eventos,
+             UNNEST(string_split(familias_ocupacionais, '; ')) AS partes(familia)
+        WHERE trim(familia) <> ''
+    """)
+    orfaos = con.execute("""
+        SELECT count(*) FROM refined.evento_familia AS f
+        LEFT JOIN refined.eventos AS e ON e.evento_id = f.evento_id
+        WHERE e.evento_id IS NULL
+    """).fetchall()[0][0]
+    if orfaos:
+        raise ValueError(f"Associações sem evento: {orfaos}")
+
+
+def _resumir(con, entrada: int) -> dict:
+    eventos = con.execute("SELECT count(*) FROM refined.eventos").fetchall()[0][0]
+    associacoes = con.execute("SELECT count(*) FROM refined.evento_familia").fetchall()[0][0]
+    consultas = [
+        f"count(*) FILTER (WHERE {db.identificador(destino)} IS NULL)" for _, destino, _ in COLUNAS
+    ]
+    contagens = con.execute("SELECT " + ", ".join(consultas) + " FROM refined.eventos").fetchall()[
+        0
+    ]
+    nulos = dict(zip((destino for _, destino, _ in COLUNAS), contagens, strict=True))
     return {
         "entrada": entrada,
         "eventos": eventos,
@@ -162,6 +155,27 @@ def executar() -> dict:
         "duplicatas_removidas": entrada - eventos,
         "nulos": nulos,
     }
+
+
+def executar() -> dict:
+    if not db.BANCO.is_file():
+        raise FileNotFoundError(f"Banco ausente: {db.BANCO}; execute pipeline.ingestao")
+    con = db.conectar()
+    try:
+        _validar_raw(con)
+        con.execute("BEGIN")
+        try:
+            entrada = _preparar_staging(con)
+            _materializar_refined(con)
+            resumo = _resumir(con, entrada)
+            con.execute("DROP TABLE _staging_eventos")
+            con.execute("COMMIT")
+        except ValueError, duckdb.Error:
+            con.execute("ROLLBACK")
+            raise
+    finally:
+        con.close()
+    return resumo
 
 
 def main():

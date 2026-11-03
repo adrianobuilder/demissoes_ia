@@ -85,8 +85,8 @@
   "html_visual_local": "Pendente manualmente; ferramenta bloqueou file:// na etapa anterior.",
   "clone_limpo_repetido_nesta_revisao": false,
   "registros_historicos": [
-    "fontes/validacao_entrega.json",
-    "fontes/validacao_visual.json"
+    "docs/validacoes/validacao_entrega.json",
+    "docs/validacoes/validacao_visual.json"
   ],
   "sha256_csv": "65a07a5c618a764376af5007e5c77f0461093547055e1317dc57753eefed9674",
   "sha256_arquivos": {
